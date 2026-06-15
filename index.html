@@ -6,10 +6,13 @@
   <title>Mapa de Corretores — São Paulo</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/osmtogeojson@3.0.0-beta.4/osmtogeojson.js"></script>
+  <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; display: flex; height: 100vh; background: #0f0f1a; }
 
+    /* ── Sidebar ── */
     #sidebar {
       width: 260px;
       background: #0f0f1a;
@@ -20,156 +23,113 @@
       border-right: 1px solid #1e1e30;
     }
 
-    #sidebar-header {
-      padding: 20px 16px 14px;
-      border-bottom: 1px solid #1e1e30;
-    }
+    #sidebar-header { padding: 16px 16px 12px; border-bottom: 1px solid #1e1e30; }
+    #sidebar-header h1 { font-size: 14px; font-weight: 700; color: #f8a845; line-height: 1.35; }
+    #sidebar-header p  { font-size: 11px; color: #555; margin-top: 3px; }
 
-    #sidebar-header h1 {
-      font-size: 15px;
-      font-weight: 700;
-      color: #f8a845;
-      line-height: 1.35;
-      letter-spacing: -0.2px;
-    }
-
-    #sidebar-header p {
-      font-size: 11px;
-      color: #555;
-      margin-top: 4px;
-    }
-
-    #search {
-      padding: 10px 12px;
-      border-bottom: 1px solid #1e1e30;
-    }
-
+    /* Search */
+    #search { padding: 9px 12px; border-bottom: 1px solid #1e1e30; }
     #search input {
-      width: 100%;
-      padding: 7px 10px;
-      background: #16162a;
-      border: 1px solid #252540;
-      border-radius: 6px;
-      color: #e0e0e0;
-      font-size: 12px;
-      outline: none;
-      transition: border-color 0.15s;
+      width: 100%; padding: 7px 10px;
+      background: #16162a; border: 1px solid #252540; border-radius: 6px;
+      color: #e0e0e0; font-size: 12px; outline: none; transition: border-color 0.15s;
     }
-
     #search input:focus { border-color: #f8a845; }
     #search input::placeholder { color: #444; }
 
-    #bairros { padding: 12px; flex: 1; overflow-y: auto; }
+    /* Zone map toggle */
+    #zone-toggle { padding: 9px 12px; border-bottom: 1px solid #1e1e30; }
+    #zone-toggle button {
+      display: flex; align-items: center; gap: 8px; width: 100%;
+      padding: 6px 8px; border-radius: 6px; cursor: pointer;
+      border: 1px solid #252540; background: #16162a;
+      color: #bbb; font-size: 12px; transition: all 0.12s;
+    }
+    #zone-toggle button.active { border-color: #f8a845; color: #f8a845; background: #1e1505; }
 
-    #bairros h3 {
-      font-size: 10px;
-      color: #444;
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      margin-bottom: 8px;
-      padding-left: 4px;
+    /* Zone tabs */
+    #zone-tabs {
+      display: flex; overflow-x: auto; border-bottom: 1px solid #1e1e30;
+      scrollbar-width: none; flex-shrink: 0;
+    }
+    #zone-tabs::-webkit-scrollbar { display: none; }
+    .ztab {
+      flex: 1; min-width: 0; padding: 8px 4px; border: none;
+      background: transparent; color: #555; font-size: 10px; font-weight: 700;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      text-transform: uppercase; letter-spacing: 0.4px;
+      white-space: nowrap; transition: all 0.15s;
+    }
+    .ztab:hover { color: #aaa; }
+    .ztab.active { border-bottom-color: var(--zc); color: var(--zc); }
+
+    /* Bairro list */
+    #bairros { flex: 1; overflow-y: auto; padding: 8px 12px; }
+    #zone-label {
+      font-size: 10px; color: #444; text-transform: uppercase;
+      letter-spacing: 1.2px; margin-bottom: 6px; padding-left: 4px; display: block;
     }
 
     .bairro-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      width: 100%;
-      padding: 7px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      border: none;
-      background: transparent;
-      color: #bbb;
-      font-size: 12px;
-      text-align: left;
-      transition: background 0.12s, color 0.12s;
+      display: flex; align-items: center; gap: 8px; width: 100%;
+      padding: 6px 8px; border-radius: 6px; cursor: pointer;
+      border: none; background: transparent; color: #bbb;
+      font-size: 12px; text-align: left; transition: background 0.12s, color 0.12s;
       margin-bottom: 2px;
     }
+    .bairro-btn:hover { background: #16162a; color: #e0e0e0; }
+    .bairro-btn.active { background: #16162a; color: #fff; font-weight: 600; }
+    .bairro-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .bairro-count { margin-left: auto; font-size: 11px; color: #444; }
+    .bairro-btn.active .bairro-count { color: #888; }
 
-    .bairro-btn:hover { background: #16162a; color: #f8a845; }
-
-    .bairro-btn.active {
-      background: #1e1505;
-      color: #f8a845;
-      font-weight: 600;
+    /* Legend */
+    #legend {
+      padding: 8px 12px; border-top: 1px solid #1e1e30;
+      display: flex; gap: 14px; flex-shrink: 0;
     }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #666; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
-    .bairro-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: #f8a845;
-      flex-shrink: 0;
-    }
-
-    .bairro-count {
-      margin-left: auto;
-      font-size: 11px;
-      color: #444;
-    }
-
-    .bairro-btn.active .bairro-count { color: #c07a1a; }
-
-    #footer {
-      padding: 10px 12px;
-      border-top: 1px solid #1e1e30;
-      font-size: 11px;
-      color: #444;
-    }
-
+    /* Footer */
+    #footer { padding: 8px 12px; border-top: 1px solid #1e1e30; font-size: 11px; color: #444; flex-shrink: 0; }
     #footer span { color: #f8a845; font-weight: 600; }
 
+    /* Map */
     #map { flex: 1; }
 
-    .leaflet-popup-content-wrapper {
-      border-radius: 10px;
-      box-shadow: 0 6px 24px rgba(0,0,0,0.18);
-      padding: 0;
-      overflow: hidden;
-    }
-
+    /* Popup */
+    .leaflet-popup-content-wrapper { border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,0.18); padding: 0; overflow: hidden; }
     .leaflet-popup-content { margin: 0; }
-
-    .popup-header {
-      background: #f8a845;
-      padding: 10px 14px 8px;
-    }
-
-    .popup-name {
-      font-weight: 700;
-      font-size: 13px;
-      color: #1a0f00;
-      line-height: 1.3;
-    }
-
-    .popup-bairro {
-      font-size: 10px;
-      color: rgba(26,15,0,0.65);
-      margin-top: 2px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      font-weight: 600;
-    }
-
-    .popup-body {
-      padding: 10px 14px 12px;
-      background: white;
-    }
-
-    .popup-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 7px;
-      font-size: 12px;
-      color: #333;
-      margin-top: 6px;
-      line-height: 1.4;
-    }
-
+    .popup-header { padding: 10px 14px 8px; }
+    .popup-name  { font-weight: 700; font-size: 13px; line-height: 1.3; }
+    .popup-bairro { font-size: 10px; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+    .popup-body  { padding: 10px 14px 12px; background: white; }
+    .popup-row   { display: flex; align-items: flex-start; gap: 7px; font-size: 12px; color: #333; margin-top: 5px; line-height: 1.4; }
     .popup-row:first-child { margin-top: 0; }
+    .popup-icon  { font-size: 13px; flex-shrink: 0; }
 
-    .popup-icon { font-size: 13px; flex-shrink: 0; margin-top: 0px; }
+    /* Status filter */
+    #status-filter { padding: 8px 12px; border-bottom: 1px solid #1e1e30; display: flex; gap: 6px; }
+    .sfilter-btn {
+      flex: 1; padding: 5px 4px; border-radius: 6px; border: 1px solid #252540;
+      background: #16162a; color: #666; font-size: 11px; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      gap: 5px; transition: all 0.14s;
+    }
+    .sfilter-btn:hover { color: #aaa; border-color: #333; }
+    .sfilter-btn.active-all      { border-color: #f8a845; color: #f8a845; background: #1e1505; }
+    .sfilter-btn.active-explored { border-color: #FF6633; color: #FF6633; background: #1e0f00; }
+    .sfilter-btn.active-unexplored { border-color: #5a7a9a; color: #8ab4cc; background: #0d1520; }
+    .sfilter-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Zone labels on map */
+    .zone-label {
+      background: transparent; border: none; font-size: 11px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: rgba(255,255,255,0.55); text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+      white-space: nowrap; pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -177,16 +137,51 @@
 <div id="sidebar">
   <div id="sidebar-header">
     <h1>Mapa de Corretores<br>São Paulo</h1>
-    <p id="total-label">96 imobiliárias · 8 bairros</p>
+    <p id="total-label">104 imobiliárias · 10 bairros</p>
   </div>
 
   <div id="search">
     <input type="text" id="search-input" placeholder="Buscar imobiliária...">
   </div>
 
+  <div id="zone-toggle">
+    <button id="btn-zonas">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <rect x="1" y="1" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 1"/>
+        <rect x="7" y="1" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 1"/>
+        <rect x="1" y="7" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 1"/>
+        <rect x="7" y="7" width="4" height="4" rx="1" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 1"/>
+      </svg>
+      <span>Mostrar zonas</span>
+    </button>
+  </div>
+
+  <div id="status-filter">
+    <button class="sfilter-btn active-all" data-status="all">
+      <span class="sfilter-dot" style="background:#f8a845"></span> Todos
+    </button>
+    <button class="sfilter-btn" data-status="explored">
+      <span class="sfilter-dot" style="background:#FF6633"></span> Visitados
+    </button>
+    <button class="sfilter-btn" data-status="unexplored">
+      <span class="sfilter-dot" style="background:#262D3B;border:1px solid #555"></span> A visitar
+    </button>
+  </div>
+
+  <div id="zone-tabs"></div>
+
   <div id="bairros">
-    <h3>Bairros</h3>
+    <span id="zone-label">Bairros</span>
     <div id="bairro-list"></div>
+  </div>
+
+  <div id="legend">
+    <div class="legend-item">
+      <span class="legend-dot" style="background:#FF6633"></span> Visitado
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot" style="background:#262D3B; border: 1px solid #555"></span> A visitar
+    </div>
   </div>
 
   <div id="footer">
@@ -197,150 +192,186 @@
 <div id="map"></div>
 
 <script>
+// ── Data ───────────────────────────────────────────────────────────────────────
+// explored: true  → laranja #FF6633 (já visitado)
+// explored: false → azul   #262D3B (a visitar)
 const locations = [
   // PINHEIROS
-  {name:"Axpe Imóveis",                    address:"Rua Aspicuelta, 245",                    bairro:"Pinheiros",       tel:"(11) 3032-1311", lat:-23.5569198, lng:-46.6877573},
-  {name:"Madah Imóveis",                   address:"Rua Purpurina, 131",                     bairro:"Pinheiros",       tel:"(11) 3031-6885", lat:-23.55326,   lng:-46.6896395},
-  {name:"Zimbro Imóveis",                  address:"Rua Mourato Coelho, 1261",               bairro:"Pinheiros",       tel:"(11) 3034-2122", lat:-23.5627352, lng:-46.6881404},
-  {name:"Next Pinheiros",                  address:"Rua Teodoro Sampaio, 2035",              bairro:"Pinheiros",       tel:"(11) 3062-8000", lat:-23.5627524, lng:-46.6861484},
-  {name:"Sh Prime Pinheiros",              address:"Rua dos Pinheiros, 1140",                bairro:"Pinheiros",       tel:"(11) 3093-5500", lat:-23.5653913, lng:-46.6822584},
-  {name:"Lopes Prime Pinheiros",           address:"Rua Fradique Coutinho, 1162",            bairro:"Pinheiros",       tel:"(11) 3039-8000", lat:-23.5638974, lng:-46.6859616},
-  {name:"Remax Unique",                    address:"Rua Cardeal Arcoverde, 1749",            bairro:"Pinheiros",       tel:"(11) 3031-0100", lat:-23.5616064, lng:-46.6881428},
-  {name:"Lello Imóveis Pinheiros",         address:"Rua dos Pinheiros, 382",                 bairro:"Pinheiros",       tel:"(11) 3811-1000", lat:-23.5651164, lng:-46.6818784},
-  {name:"Coelho da Fonseca Pinheiros",     address:"Avenida Brigadeiro Faria Lima, 1451",   bairro:"Pinheiros",       tel:"(11) 3811-2000", lat:-23.5779404, lng:-46.6865901},
-  {name:"Bamberg Imóveis de Elite",        address:"Rua Mourato Coelho, 946",               bairro:"Pinheiros",       tel:"(11) 3038-1200", lat:-23.5568994, lng:-46.6922463},
-  {name:"Mello Imóveis Pinheiros",         address:"Rua Pinheiros, 642",                    bairro:"Pinheiros",       tel:"(11) 3081-3311", lat:-23.5648000, lng:-46.6820000},
-  {name:"Pinheiros S/A",                   address:"Rua Artur de Azevedo, 1520",            bairro:"Pinheiros",       tel:"(11) 3064-9000", lat:-23.5611378, lng:-46.6792157},
+  {name:"Axpe Imóveis",                    address:"Rua Aspicuelta, 245",                    bairro:"Pinheiros",       tel:"(11) 3032-1311", lat:-23.5569198, lng:-46.6877573, explored:false},
+  {name:"Madah Imóveis",                   address:"Rua Purpurina, 131",                     bairro:"Pinheiros",       tel:"(11) 3031-6885", lat:-23.55326,   lng:-46.6896395, explored:false},
+  {name:"Zimbro Imóveis",                  address:"Rua Mourato Coelho, 1261",               bairro:"Pinheiros",       tel:"(11) 3034-2122", lat:-23.5627352, lng:-46.6881404, explored:false},
+  {name:"Next Pinheiros",                  address:"Rua Teodoro Sampaio, 2035",              bairro:"Pinheiros",       tel:"(11) 3062-8000", lat:-23.5627524, lng:-46.6861484, explored:false},
+  {name:"Sh Prime Pinheiros",              address:"Rua dos Pinheiros, 1140",                bairro:"Pinheiros",       tel:"(11) 3093-5500", lat:-23.5653913, lng:-46.6822584, explored:false},
+  {name:"Lopes Prime Pinheiros",           address:"Rua Fradique Coutinho, 1162",            bairro:"Pinheiros",       tel:"(11) 3039-8000", lat:-23.5638974, lng:-46.6859616, explored:false},
+  {name:"Remax Unique",                    address:"Rua Cardeal Arcoverde, 1749",            bairro:"Pinheiros",       tel:"(11) 3031-0100", lat:-23.5616064, lng:-46.6881428, explored:false},
+  {name:"Lello Imóveis Pinheiros",         address:"Rua dos Pinheiros, 382",                 bairro:"Pinheiros",       tel:"(11) 3811-1000", lat:-23.5651164, lng:-46.6818784, explored:false},
+  {name:"Coelho da Fonseca Pinheiros",     address:"Avenida Brigadeiro Faria Lima, 1451",   bairro:"Pinheiros",       tel:"(11) 3811-2000", lat:-23.5779404, lng:-46.6865901, explored:false},
+  {name:"Bamberg Imóveis de Elite",        address:"Rua Mourato Coelho, 946",               bairro:"Pinheiros",       tel:"(11) 3038-1200", lat:-23.5568994, lng:-46.6922463, explored:false},
+  {name:"Mello Imóveis Pinheiros",         address:"Rua Pinheiros, 642",                    bairro:"Pinheiros",       tel:"(11) 3081-3311", lat:-23.5648000, lng:-46.6820000, explored:false},
+  {name:"Pinheiros S/A",                   address:"Rua Artur de Azevedo, 1520",            bairro:"Pinheiros",       tel:"(11) 3064-9000", lat:-23.5611378, lng:-46.6792157, explored:false},
   // POMPEIA
-  {name:"Rocha Cunha Imóveis",             address:"Rua Vanderlei, 1555",                   bairro:"Pompeia",         tel:"(11) 3675-1170", lat:-23.5362828, lng:-46.6807886},
-  {name:"YK Private",                      address:"Rua Venâncio Aires, 433",               bairro:"Pompeia",         tel:"(11) 5026-9329", lat:-23.5285262, lng:-46.6819332},
-  {name:"Abrahão Imóveis",                 address:"Rua Diana, 515",                        bairro:"Pompeia",         tel:"(11) 3864-1044", lat:-23.5330125, lng:-46.6810914},
-  {name:"Karisma Imóveis",                 address:"Rua Vanderlei, 1493",                   bairro:"Pompeia",         tel:"(11) 3675-6111", lat:-23.5366294, lng:-46.6802738},
-  {name:"Local Imóveis Pompeia",           address:"Avenida Pompeia, 1289",                 bairro:"Pompeia",         tel:"(11) 3868-9000", lat:-23.5346134, lng:-46.6879262},
-  {name:"Sh Prime Pompeia",                address:"Avenida Pompeia, 1610",                 bairro:"Pompeia",         tel:"(11) 3677-1000", lat:-23.5375191, lng:-46.6903744},
-  {name:"Remax Liberty",                   address:"Rua Cotoxó, 611",                       bairro:"Pompeia",         tel:"(11) 3871-3333", lat:-23.5325241, lng:-46.6848883},
-  {name:"Lello Pompeia",                   address:"Avenida Pompeia, 1825",                 bairro:"Pompeia",         tel:"(11) 3674-7000", lat:-23.5352324, lng:-46.6883681},
-  {name:"Lopes One Pompeia",               address:"Avenida Pompeia, 954",                  bairro:"Pompeia",         tel:"(11) 3803-7100", lat:-23.5325832, lng:-46.6868661},
-  {name:"Imobiliária Romano",              address:"Rua Venâncio Aires, 850",               bairro:"Pompeia",         tel:"(11) 3672-4000", lat:-23.5262509, lng:-46.6851671},
-  {name:"Pompeia Imóveis",                 address:"Avenida Pompeia, 1118",                 bairro:"Pompeia",         tel:"(11) 3862-2022", lat:-23.5338109, lng:-46.6877579},
-  {name:"Nova Romano",                     address:"Rua Desembargador do Vale, 612",        bairro:"Pompeia",         tel:"(11) 3873-1011", lat:-23.5307534, lng:-46.6866342},
+  {name:"Rocha Cunha Imóveis",             address:"Rua Vanderlei, 1555",                   bairro:"Pompeia",         tel:"(11) 3675-1170", lat:-23.5362828, lng:-46.6807886, explored:false},
+  {name:"YK Private",                      address:"Rua Venâncio Aires, 433",               bairro:"Pompeia",         tel:"(11) 5026-9329", lat:-23.5285262, lng:-46.6819332, explored:false},
+  {name:"Abrahão Imóveis",                 address:"Rua Diana, 515",                        bairro:"Pompeia",         tel:"(11) 3864-1044", lat:-23.5330125, lng:-46.6810914, explored:false},
+  {name:"Karisma Imóveis",                 address:"Rua Vanderlei, 1493",                   bairro:"Pompeia",         tel:"(11) 3675-6111", lat:-23.5366294, lng:-46.6802738, explored:false},
+  {name:"Local Imóveis Pompeia",           address:"Avenida Pompeia, 1289",                 bairro:"Pompeia",         tel:"(11) 3868-9000", lat:-23.5346134, lng:-46.6879262, explored:false},
+  {name:"Sh Prime Pompeia",                address:"Avenida Pompeia, 1610",                 bairro:"Pompeia",         tel:"(11) 3677-1000", lat:-23.5375191, lng:-46.6903744, explored:false},
+  {name:"Remax Liberty",                   address:"Rua Cotoxó, 611",                       bairro:"Pompeia",         tel:"(11) 3871-3333", lat:-23.5325241, lng:-46.6848883, explored:false},
+  {name:"Lello Pompeia",                   address:"Avenida Pompeia, 1825",                 bairro:"Pompeia",         tel:"(11) 3674-7000", lat:-23.5352324, lng:-46.6883681, explored:false},
+  {name:"Lopes One Pompeia",               address:"Avenida Pompeia, 954",                  bairro:"Pompeia",         tel:"(11) 3803-7100", lat:-23.5325832, lng:-46.6868661, explored:false},
+  {name:"Imobiliária Romano",              address:"Rua Venâncio Aires, 850",               bairro:"Pompeia",         tel:"(11) 3672-4000", lat:-23.5262509, lng:-46.6851671, explored:false},
+  {name:"Pompeia Imóveis",                 address:"Avenida Pompeia, 1118",                 bairro:"Pompeia",         tel:"(11) 3862-2022", lat:-23.5338109, lng:-46.6877579, explored:false},
+  {name:"Nova Romano",                     address:"Rua Desembargador do Vale, 612",        bairro:"Pompeia",         tel:"(11) 3873-1011", lat:-23.5307534, lng:-46.6866342, explored:false},
   // PERDIZES
-  {name:"Sh Prime Perdizes",               address:"Rua Cardoso de Almeida, 1170",          bairro:"Perdizes",        tel:"(11) 3677-1010", lat:-23.540611,  lng:-46.6704169},
-  {name:"Lello Imóveis Perdizes",          address:"Rua Cardoso de Almeida, 921",           bairro:"Perdizes",        tel:"(11) 3874-3000", lat:-23.5387297, lng:-46.6689623},
-  {name:"Lopes Exclusive Perdizes",        address:"Rua Tuim, 452",                         bairro:"Perdizes",        tel:"(11) 3868-8000", lat:-23.5410000, lng:-46.6690000},
-  {name:"Remax Gold Perdizes",             address:"Rua Itapicuru, 345",                    bairro:"Perdizes",        tel:"(11) 3872-9000", lat:-23.5358453, lng:-46.6675845},
-  {name:"Coelho da Fonseca Perdizes",      address:"Rua Cardoso de Almeida, 1500",          bairro:"Perdizes",        tel:"(11) 3670-2000", lat:-23.5429701, lng:-46.6723314},
-  {name:"Mário Biseo Perdizes",            address:"Rua Turiassu, 659",                     bairro:"Perdizes",        tel:"(11) 3871-9200", lat:-23.5330689, lng:-46.6694861},
-  {name:"Graziella dos Imóveis Perdizes",  address:"Rua Doutor Homem de Melo, 450",         bairro:"Perdizes",        tel:"(11) 3864-5151", lat:-23.5366864, lng:-46.6690766},
-  {name:"Perdizes Imóveis",                address:"Rua Bartira, 412",                      bairro:"Perdizes",        tel:"(11) 3673-4040", lat:-23.5384087, lng:-46.6720388},
-  {name:"Century 21 Perdizes",             address:"Rua Itapicuru, 730",                    bairro:"Perdizes",        tel:"(11) 3865-8000", lat:-23.5337891, lng:-46.6706497},
-  {name:"Imobiliária Turiassu",            address:"Rua Turiassu, 1143",                    bairro:"Perdizes",        tel:"(11) 3672-5555", lat:-23.5317474, lng:-46.6740219},
-  {name:"Imóveis Perdizes Alto Padrão",    address:"Rua Monte Alegre, 610",                 bairro:"Perdizes",        tel:"(11) 3862-5000", lat:-23.5357582, lng:-46.668613},
-  {name:"Elite Perdizes",                  address:"Rua Capital Federal, 215",              bairro:"Perdizes",        tel:"(11) 3875-1020", lat:-23.5419504, lng:-46.6833598},
+  {name:"Sh Prime Perdizes",               address:"Rua Cardoso de Almeida, 1170",          bairro:"Perdizes",        tel:"(11) 3677-1010", lat:-23.540611,  lng:-46.6704169, explored:false},
+  {name:"Lello Imóveis Perdizes",          address:"Rua Cardoso de Almeida, 921",           bairro:"Perdizes",        tel:"(11) 3874-3000", lat:-23.5387297, lng:-46.6689623, explored:false},
+  {name:"Lopes Exclusive Perdizes",        address:"Rua Tuim, 452",                         bairro:"Perdizes",        tel:"(11) 3868-8000", lat:-23.5410000, lng:-46.6690000, explored:false},
+  {name:"Remax Gold Perdizes",             address:"Rua Itapicuru, 345",                    bairro:"Perdizes",        tel:"(11) 3872-9000", lat:-23.5358453, lng:-46.6675845, explored:false},
+  {name:"Coelho da Fonseca Perdizes",      address:"Rua Cardoso de Almeida, 1500",          bairro:"Perdizes",        tel:"(11) 3670-2000", lat:-23.5429701, lng:-46.6723314, explored:false},
+  {name:"Mário Biseo Perdizes",            address:"Rua Turiassu, 659",                     bairro:"Perdizes",        tel:"(11) 3871-9200", lat:-23.5330689, lng:-46.6694861, explored:false},
+  {name:"Graziella dos Imóveis Perdizes",  address:"Rua Doutor Homem de Melo, 450",         bairro:"Perdizes",        tel:"(11) 3864-5151", lat:-23.5366864, lng:-46.6690766, explored:false},
+  {name:"Perdizes Imóveis",                address:"Rua Bartira, 412",                      bairro:"Perdizes",        tel:"(11) 3673-4040", lat:-23.5384087, lng:-46.6720388, explored:false},
+  {name:"Century 21 Perdizes",             address:"Rua Itapicuru, 730",                    bairro:"Perdizes",        tel:"(11) 3865-8000", lat:-23.5337891, lng:-46.6706497, explored:false},
+  {name:"Imobiliária Turiassu",            address:"Rua Turiassu, 1143",                    bairro:"Perdizes",        tel:"(11) 3672-5555", lat:-23.5317474, lng:-46.6740219, explored:false},
+  {name:"Imóveis Perdizes Alto Padrão",    address:"Rua Monte Alegre, 610",                 bairro:"Perdizes",        tel:"(11) 3862-5000", lat:-23.5357582, lng:-46.668613,  explored:false},
+  {name:"Elite Perdizes",                  address:"Rua Capital Federal, 215",              bairro:"Perdizes",        tel:"(11) 3875-1020", lat:-23.5419504, lng:-46.6833598, explored:false},
   // VILA MADALENA
-  {name:"Axpe Vila Madalena",              address:"Rua Fradique Coutinho, 1395",           bairro:"Vila Madalena",   tel:"(11) 3032-1311", lat:-23.5557034, lng:-46.6918244},
-  {name:"Madah Imóveis Vila Madalena",     address:"Rua Purpurina, 131",                    bairro:"Vila Madalena",   tel:"(11) 3031-6885", lat:-23.55326,   lng:-46.6896395},
-  {name:"Zimbro Vila Madalena",            address:"Rua Mourato Coelho, 1261",              bairro:"Vila Madalena",   tel:"(11) 3034-2122", lat:-23.5627352, lng:-46.6881404},
-  {name:"Anglo Americana",                 address:"Rua Pedroso Alvarenga, 1177",           bairro:"Vila Madalena",   tel:"(11) 3816-3000", lat:-23.5827089, lng:-46.6816003},
-  {name:"Remax Destiny",                   address:"Rua Harmonia, 810",                     bairro:"Vila Madalena",   tel:"(11) 3031-5050", lat:-23.5521457, lng:-46.6901877},
-  {name:"Lopes One Vila Madalena",         address:"Rua Heitor Penteado, 1420",             bairro:"Vila Madalena",   tel:"(11) 3674-8000", lat:-23.5458989, lng:-46.6915675},
-  {name:"Sh Prime Vila Madalena",          address:"Rua Wisard, 415",                       bairro:"Vila Madalena",   tel:"(11) 3093-5555", lat:-23.5553476, lng:-46.6897408},
-  {name:"Lello Vila Madalena",             address:"Rua Harmonia, 320",                     bairro:"Vila Madalena",   tel:"(11) 3811-1050", lat:-23.5487569, lng:-46.691777},
-  {name:"Vila Madalena Imóveis Premium",   address:"Rua Girassol, 612",                     bairro:"Vila Madalena",   tel:"(11) 3032-9000", lat:-23.5536728, lng:-46.6903667},
-  {name:"Tarcha Imóveis",                  address:"Rua Fradique Coutinho, 1202",           bairro:"Vila Madalena",   tel:"(11) 3815-4322", lat:-23.5516588, lng:-46.6943828},
-  {name:"Bossa Nova Sotheby's",            address:"Rua Estados Unidos, 1152",              bairro:"Vila Madalena",   tel:"(11) 3061-0000", lat:-23.5689585, lng:-46.6661315},
-  {name:"Casa Madalena",                   address:"Rua Aspicuelta, 340",                   bairro:"Vila Madalena",   tel:"(11) 3031-4040", lat:-23.5563954, lng:-46.6874672},
+  {name:"Axpe Vila Madalena",              address:"Rua Fradique Coutinho, 1395",           bairro:"Vila Madalena",   tel:"(11) 3032-1311", lat:-23.5557034, lng:-46.6918244, explored:false},
+  {name:"Madah Imóveis Vila Madalena",     address:"Rua Purpurina, 131",                    bairro:"Vila Madalena",   tel:"(11) 3031-6885", lat:-23.55326,   lng:-46.6896395, explored:false},
+  {name:"Zimbro Vila Madalena",            address:"Rua Mourato Coelho, 1261",              bairro:"Vila Madalena",   tel:"(11) 3034-2122", lat:-23.5627352, lng:-46.6881404, explored:false},
+  {name:"Anglo Americana",                 address:"Rua Pedroso Alvarenga, 1177",           bairro:"Vila Madalena",   tel:"(11) 3816-3000", lat:-23.5827089, lng:-46.6816003, explored:false},
+  {name:"Remax Destiny",                   address:"Rua Harmonia, 810",                     bairro:"Vila Madalena",   tel:"(11) 3031-5050", lat:-23.5521457, lng:-46.6901877, explored:false},
+  {name:"Lopes One Vila Madalena",         address:"Rua Heitor Penteado, 1420",             bairro:"Vila Madalena",   tel:"(11) 3674-8000", lat:-23.5458989, lng:-46.6915675, explored:false},
+  {name:"Sh Prime Vila Madalena",          address:"Rua Wisard, 415",                       bairro:"Vila Madalena",   tel:"(11) 3093-5555", lat:-23.5553476, lng:-46.6897408, explored:false},
+  {name:"Lello Vila Madalena",             address:"Rua Harmonia, 320",                     bairro:"Vila Madalena",   tel:"(11) 3811-1050", lat:-23.5487569, lng:-46.691777,  explored:false},
+  {name:"Vila Madalena Imóveis Premium",   address:"Rua Girassol, 612",                     bairro:"Vila Madalena",   tel:"(11) 3032-9000", lat:-23.5536728, lng:-46.6903667, explored:false},
+  {name:"Tarcha Imóveis",                  address:"Rua Fradique Coutinho, 1202",           bairro:"Vila Madalena",   tel:"(11) 3815-4322", lat:-23.5516588, lng:-46.6943828, explored:false},
+  {name:"Bossa Nova Sotheby's",            address:"Rua Estados Unidos, 1152",              bairro:"Vila Madalena",   tel:"(11) 3061-0000", lat:-23.5689585, lng:-46.6661315, explored:false},
+  {name:"Casa Madalena",                   address:"Rua Aspicuelta, 340",                   bairro:"Vila Madalena",   tel:"(11) 3031-4040", lat:-23.5563954, lng:-46.6874672, explored:false},
   // VILA LEOPOLDINA
-  {name:"Local Imóveis Leopoldina",        address:"Rua Carlos Weber, 1452",               bairro:"Vila Leopoldina",  tel:"(11) 3646-8000", lat:-23.5322285, lng:-46.726472},
-  {name:"Sh Prime Vila Leopoldina",        address:"Rua Carlos Weber, 715",                bairro:"Vila Leopoldina",  tel:"(11) 3648-5000", lat:-23.5271913, lng:-46.7311616},
-  {name:"Lello Vila Leopoldina",           address:"Avenida Imperatriz Leopoldina, 1120",  bairro:"Vila Leopoldina",  tel:"(11) 3643-4000", lat:-23.5314348, lng:-46.7304651},
-  {name:"Lopes One Vila Leopoldina",       address:"Rua Carlos Weber, 1190",               bairro:"Vila Leopoldina",  tel:"(11) 3649-7000", lat:-23.5304431, lng:-46.7281569},
-  {name:"Remax Japi",                      address:"Rua Carlos Weber, 532",                bairro:"Vila Leopoldina",  tel:"(11) 3831-2000", lat:-23.5259467, lng:-46.7323314},
-  {name:"Coelho da Fonseca Leopoldina",    address:"Rua Carlos Weber, 1633",               bairro:"Vila Leopoldina",  tel:"(11) 3643-2000", lat:-23.5334313, lng:-46.7253388},
-  {name:"Leopoldina Imóveis",              address:"Avenida Imperatriz Leopoldina, 957",   bairro:"Vila Leopoldina",  tel:"(11) 3831-1011", lat:-23.5301056, lng:-46.7312749},
-  {name:"Weber Imóveis",                   address:"Rua Carlos Weber, 810",                bairro:"Vila Leopoldina",  tel:"(11) 3641-3030", lat:-23.5278382, lng:-46.73056},
-  {name:"Mbras Imóveis Leopoldina",        address:"Avenida Brigadeiro Faria Lima, 2012",  bairro:"Vila Leopoldina",  tel:"(11) 3034-3111", lat:-23.5749535, lng:-46.6887537},
-  {name:"Nova Opção Leopoldina",           address:"Avenida Imperatriz Leopoldina, 1222",  bairro:"Vila Leopoldina",  tel:"(11) 3645-1020", lat:-23.5321338, lng:-46.7298106},
-  {name:"Prime Choice Leopoldina",         address:"Rua Clélia, 2200",                     bairro:"Vila Leopoldina",  tel:"(11) 3832-4000", lat:-23.5247354, lng:-46.7036039},
-  {name:"Direct Imóveis Leopoldina",       address:"Rua Schilling, 412",                   bairro:"Vila Leopoldina",  tel:"(11) 3641-8080", lat:-23.53045,   lng:-46.7285146},
+  {name:"Local Imóveis Leopoldina",        address:"Rua Carlos Weber, 1452",               bairro:"Vila Leopoldina",  tel:"(11) 3646-8000", lat:-23.5322285, lng:-46.726472,  explored:false},
+  {name:"Sh Prime Vila Leopoldina",        address:"Rua Carlos Weber, 715",                bairro:"Vila Leopoldina",  tel:"(11) 3648-5000", lat:-23.5271913, lng:-46.7311616, explored:false},
+  {name:"Lello Vila Leopoldina",           address:"Avenida Imperatriz Leopoldina, 1120",  bairro:"Vila Leopoldina",  tel:"(11) 3643-4000", lat:-23.5314348, lng:-46.7304651, explored:false},
+  {name:"Lopes One Vila Leopoldina",       address:"Rua Carlos Weber, 1190",               bairro:"Vila Leopoldina",  tel:"(11) 3649-7000", lat:-23.5304431, lng:-46.7281569, explored:false},
+  {name:"Remax Japi",                      address:"Rua Carlos Weber, 532",                bairro:"Vila Leopoldina",  tel:"(11) 3831-2000", lat:-23.5259467, lng:-46.7323314, explored:false},
+  {name:"Coelho da Fonseca Leopoldina",    address:"Rua Carlos Weber, 1633",               bairro:"Vila Leopoldina",  tel:"(11) 3643-2000", lat:-23.5334313, lng:-46.7253388, explored:false},
+  {name:"Leopoldina Imóveis",              address:"Avenida Imperatriz Leopoldina, 957",   bairro:"Vila Leopoldina",  tel:"(11) 3831-1011", lat:-23.5301056, lng:-46.7312749, explored:false},
+  {name:"Weber Imóveis",                   address:"Rua Carlos Weber, 810",                bairro:"Vila Leopoldina",  tel:"(11) 3641-3030", lat:-23.5278382, lng:-46.73056,   explored:false},
+  {name:"Mbras Imóveis Leopoldina",        address:"Avenida Brigadeiro Faria Lima, 2012",  bairro:"Vila Leopoldina",  tel:"(11) 3034-3111", lat:-23.5749535, lng:-46.6887537, explored:false},
+  {name:"Nova Opção Leopoldina",           address:"Avenida Imperatriz Leopoldina, 1222",  bairro:"Vila Leopoldina",  tel:"(11) 3645-1020", lat:-23.5321338, lng:-46.7298106, explored:false},
+  {name:"Prime Choice Leopoldina",         address:"Rua Clélia, 2200",                     bairro:"Vila Leopoldina",  tel:"(11) 3832-4000", lat:-23.5247354, lng:-46.7036039, explored:false},
+  {name:"Direct Imóveis Leopoldina",       address:"Rua Schilling, 412",                   bairro:"Vila Leopoldina",  tel:"(11) 3641-8080", lat:-23.53045,   lng:-46.7285146, explored:false},
   // ITAIM BIBI
-  {name:"Itaim Ville",                     address:"Rua Pedroso Alvarenga, 328",           bairro:"Itaim Bibi",       tel:"(11) 3588-0808", lat:-23.580564,  lng:-46.6737017},
-  {name:"Mello Imóveis Itaim",             address:"Rua Tabapuã, 627",                     bairro:"Itaim Bibi",       tel:"(11) 3167-3311", lat:-23.5833859, lng:-46.6767278},
-  {name:"Special Properties",              address:"Rua Joaquim Floriano, 466",            bairro:"Itaim Bibi",       tel:"(11) 3168-5000", lat:-23.5845652, lng:-46.6745028},
-  {name:"Lopes Prime Itaim",               address:"Rua Joaquim Floriano, 1060",           bairro:"Itaim Bibi",       tel:"(11) 3165-8000", lat:-23.5860929, lng:-46.6802899},
-  {name:"Sh Prime Itaim",                  address:"Rua Tabapuã, 1125",                    bairro:"Itaim Bibi",       tel:"(11) 3074-1000", lat:-23.5846771, lng:-46.6814502},
-  {name:"Coelho da Fonseca Itaim",         address:"Rua Pedroso Alvarenga, 900",           bairro:"Itaim Bibi",       tel:"(11) 3160-2000", lat:-23.5818424, lng:-46.679341},
-  {name:"Lello Imóveis Itaim",             address:"Rua Pedroso Alvarenga, 513",           bairro:"Itaim Bibi",       tel:"(11) 3078-3000", lat:-23.5810422, lng:-46.6754653},
-  {name:"Remax Master",                    address:"Rua Tabapuã, 1450",                    bairro:"Itaim Bibi",       tel:"(11) 3071-2020", lat:-23.5855697, lng:-46.6844249},
-  {name:"Graziella dos Imóveis Itaim",     address:"Rua Joaquim Floriano, 871",            bairro:"Itaim Bibi",       tel:"(11) 3079-5151", lat:-23.5835294, lng:-46.6709349},
-  {name:"JLL Corporate",                   address:"Avenida Brigadeiro Faria Lima, 3477",  bairro:"Itaim Bibi",       tel:"(11) 3043-6000", lat:-23.5863292, lng:-46.6817127},
-  {name:"Binswanger Imóveis",              address:"Rua Tabapuã, 474",                     bairro:"Itaim Bibi",       tel:"(11) 3073-1000", lat:-23.5829854, lng:-46.6752575},
-  {name:"Taylor Real Estate",              address:"Rua Pedroso Alvarenga, 1245",          bairro:"Itaim Bibi",       tel:"(11) 3074-2200", lat:-23.582878,  lng:-46.6822273},
+  {name:"Itaim Ville",                     address:"Rua Pedroso Alvarenga, 328",           bairro:"Itaim Bibi",       tel:"(11) 3588-0808", lat:-23.580564,  lng:-46.6737017, explored:false},
+  {name:"Mello Imóveis Itaim",             address:"Rua Tabapuã, 627",                     bairro:"Itaim Bibi",       tel:"(11) 3167-3311", lat:-23.5833859, lng:-46.6767278, explored:false},
+  {name:"Special Properties",              address:"Rua Joaquim Floriano, 466",            bairro:"Itaim Bibi",       tel:"(11) 3168-5000", lat:-23.5845652, lng:-46.6745028, explored:false},
+  {name:"Lopes Prime Itaim",               address:"Rua Joaquim Floriano, 1060",           bairro:"Itaim Bibi",       tel:"(11) 3165-8000", lat:-23.5860929, lng:-46.6802899, explored:false},
+  {name:"Sh Prime Itaim",                  address:"Rua Tabapuã, 1125",                    bairro:"Itaim Bibi",       tel:"(11) 3074-1000", lat:-23.5846771, lng:-46.6814502, explored:false},
+  {name:"Coelho da Fonseca Itaim",         address:"Rua Pedroso Alvarenga, 900",           bairro:"Itaim Bibi",       tel:"(11) 3160-2000", lat:-23.5818424, lng:-46.679341,  explored:false},
+  {name:"Lello Imóveis Itaim",             address:"Rua Pedroso Alvarenga, 513",           bairro:"Itaim Bibi",       tel:"(11) 3078-3000", lat:-23.5810422, lng:-46.6754653, explored:false},
+  {name:"Remax Master",                    address:"Rua Tabapuã, 1450",                    bairro:"Itaim Bibi",       tel:"(11) 3071-2020", lat:-23.5855697, lng:-46.6844249, explored:false},
+  {name:"Graziella dos Imóveis Itaim",     address:"Rua Joaquim Floriano, 871",            bairro:"Itaim Bibi",       tel:"(11) 3079-5151", lat:-23.5835294, lng:-46.6709349, explored:false},
+  {name:"JLL Corporate",                   address:"Avenida Brigadeiro Faria Lima, 3477",  bairro:"Itaim Bibi",       tel:"(11) 3043-6000", lat:-23.5863292, lng:-46.6817127, explored:false},
+  {name:"Binswanger Imóveis",              address:"Rua Tabapuã, 474",                     bairro:"Itaim Bibi",       tel:"(11) 3073-1000", lat:-23.5829854, lng:-46.6752575, explored:false},
+  {name:"Taylor Real Estate",              address:"Rua Pedroso Alvarenga, 1245",          bairro:"Itaim Bibi",       tel:"(11) 3074-2200", lat:-23.582878,  lng:-46.6822273, explored:false},
   // VILA OLÍMPIA
-  {name:"Vértiza Imóveis",                 address:"Rua Casa do Ator, 1117",               bairro:"Vila Olímpia",     tel:"(11) 94027-7000",lat:-23.5966906, lng:-46.6837211},
-  {name:"Sh Prime Vila Olímpia",           address:"Rua Olimpíadas, 200",                  bairro:"Vila Olímpia",     tel:"(11) 3045-5000", lat:-23.5955879, lng:-46.68477},
-  {name:"Lopes One Vila Olímpia",          address:"Rua Ramos Batista, 152",               bairro:"Vila Olímpia",     tel:"(11) 3049-9000", lat:-23.591985,  lng:-46.6845452},
-  {name:"Remax Action",                    address:"Rua Gomes de Carvalho, 1329",          bairro:"Vila Olímpia",     tel:"(11) 3845-1010", lat:-23.6011325, lng:-46.6765251},
-  {name:"Lello Vila Olímpia",              address:"Rua Alvorada, 1240",                   bairro:"Vila Olímpia",     tel:"(11) 3848-2000", lat:-23.5961018, lng:-46.6825408},
-  {name:"Coelho da Fonseca Faria Lima",    address:"Avenida Brigadeiro Faria Lima, 3900",  bairro:"Vila Olímpia",     tel:"(11) 3160-2000", lat:-23.5901699, lng:-46.6820988},
-  {name:"Olímpia Casa Imóveis",            address:"Rua Casa do Ator, 355",                bairro:"Vila Olímpia",     tel:"(11) 3842-1020", lat:-23.5997142, lng:-46.6771985},
-  {name:"Capital Brokers",                 address:"Rua Funchal, 418",                     bairro:"Vila Olímpia",     tel:"(11) 3044-7000", lat:-23.5936301, lng:-46.6905142},
-  {name:"Prime Vila Olímpia",              address:"Avenida Doutor Cardoso de Melo, 1460", bairro:"Vila Olímpia",     tel:"(11) 3849-3030", lat:-23.5972701, lng:-46.6874172},
-  {name:"Mbras Luxo Vila Olímpia",         address:"Avenida Brigadeiro Faria Lima, 2012",  bairro:"Vila Olímpia",     tel:"(11) 3034-3111", lat:-23.5749535, lng:-46.6887537},
-  {name:"Velo Imóveis",                    address:"Rua Beira Rio, 45",                    bairro:"Vila Olímpia",     tel:"(11) 3044-1515", lat:-23.5947472, lng:-46.6911722},
-  {name:"Nova Olímpia",                    address:"Rua João Cachoeira, 1520",             bairro:"Vila Olímpia",     tel:"(11) 3846-9090", lat:-23.5935254, lng:-46.6750097},
+  {name:"Vértiza Imóveis",                 address:"Rua Casa do Ator, 1117",               bairro:"Vila Olímpia",     tel:"(11) 94027-7000",lat:-23.5966906, lng:-46.6837211, explored:false},
+  {name:"Sh Prime Vila Olímpia",           address:"Rua Olimpíadas, 200",                  bairro:"Vila Olímpia",     tel:"(11) 3045-5000", lat:-23.5955879, lng:-46.68477,   explored:false},
+  {name:"Lopes One Vila Olímpia",          address:"Rua Ramos Batista, 152",               bairro:"Vila Olímpia",     tel:"(11) 3049-9000", lat:-23.591985,  lng:-46.6845452, explored:false},
+  {name:"Remax Action",                    address:"Rua Gomes de Carvalho, 1329",          bairro:"Vila Olímpia",     tel:"(11) 3845-1010", lat:-23.6011325, lng:-46.6765251, explored:false},
+  {name:"Lello Vila Olímpia",              address:"Rua Alvorada, 1240",                   bairro:"Vila Olímpia",     tel:"(11) 3848-2000", lat:-23.5961018, lng:-46.6825408, explored:false},
+  {name:"Coelho da Fonseca Faria Lima",    address:"Avenida Brigadeiro Faria Lima, 3900",  bairro:"Vila Olímpia",     tel:"(11) 3160-2000", lat:-23.5901699, lng:-46.6820988, explored:false},
+  {name:"Olímpia Casa Imóveis",            address:"Rua Casa do Ator, 355",                bairro:"Vila Olímpia",     tel:"(11) 3842-1020", lat:-23.5997142, lng:-46.6771985, explored:false},
+  {name:"Capital Brokers",                 address:"Rua Funchal, 418",                     bairro:"Vila Olímpia",     tel:"(11) 3044-7000", lat:-23.5936301, lng:-46.6905142, explored:false},
+  {name:"Prime Vila Olímpia",              address:"Avenida Doutor Cardoso de Melo, 1460", bairro:"Vila Olímpia",     tel:"(11) 3849-3030", lat:-23.5972701, lng:-46.6874172, explored:false},
+  {name:"Mbras Luxo Vila Olímpia",         address:"Avenida Brigadeiro Faria Lima, 2012",  bairro:"Vila Olímpia",     tel:"(11) 3034-3111", lat:-23.5749535, lng:-46.6887537, explored:false},
+  {name:"Velo Imóveis",                    address:"Rua Beira Rio, 45",                    bairro:"Vila Olímpia",     tel:"(11) 3044-1515", lat:-23.5947472, lng:-46.6911722, explored:false},
+  {name:"Nova Olímpia",                    address:"Rua João Cachoeira, 1520",             bairro:"Vila Olímpia",     tel:"(11) 3846-9090", lat:-23.5935254, lng:-46.6750097, explored:false},
   // BELA VISTA
-  {name:"Refúgios Urbanos Bela Vista",     address:"Rua Rio de Janeiro, 358",              bairro:"Bela Vista",       tel:"(11) 97972-0161",lat:-23.5580000, lng:-46.6430000},
-  {name:"Cobertura 101",                   address:"Rua da Consolação, 57",                bairro:"Bela Vista",       tel:"(11) 99313-2615",lat:-23.5480045, lng:-46.6419066},
-  {name:"Lello Imóveis Bela Vista",        address:"Avenida Paulista, 1200",               bairro:"Bela Vista",       tel:"(11) 3145-2000", lat:-23.5572014, lng:-46.6610391},
-  {name:"Sh Prime Bela Vista",             address:"Avenida Brigadeiro Luís Antônio, 2344",bairro:"Bela Vista",       tel:"(11) 3149-5000", lat:-23.5681262, lng:-46.6496356},
-  {name:"Lopes One Paulista",              address:"Rua Augusta, 1500",                    bairro:"Bela Vista",       tel:"(11) 3549-9000", lat:-23.5565457, lng:-46.6586475},
-  {name:"Remax Central",                   address:"Rua Pamplona, 1400",                   bairro:"Bela Vista",       tel:"(11) 3285-4000", lat:-23.5689337, lng:-46.658961},
-  {name:"Bela Vista Imóveis",              address:"Rua Treze de Maio, 1430",              bairro:"Bela Vista",       tel:"(11) 3284-5000", lat:-23.5658417, lng:-46.6450044},
-  {name:"Imobiliária Avanhandava",         address:"Rua Avanhandava, 258",                 bairro:"Bela Vista",       tel:"(11) 3255-1011", lat:-23.5504948, lng:-46.6453129},
-  {name:"SBR Brokers",                     address:"Rua Frei Caneca, 558",                 bairro:"Bela Vista",       tel:"(11) 3151-6000", lat:-23.5531841, lng:-46.653078},
-  {name:"Bixiga Imóveis",                  address:"Rua Rui Barbosa, 412",                 bairro:"Bela Vista",       tel:"(11) 3289-2020", lat:-23.5591741, lng:-46.6454072},
-  {name:"Paulista Prime",                  address:"Alameda Santos, 1100",                 bairro:"Bela Vista",       tel:"(11) 3171-8000", lat:-23.5569896, lng:-46.6634724},
-  {name:"Get Imóveis Bela Vista",          address:"Rua São Carlos do Pinhal, 312",        bairro:"Bela Vista",       tel:"(11) 3266-7070", lat:-23.564566,  lng:-46.6505682}
+  {name:"Refúgios Urbanos Bela Vista",     address:"Rua Rio de Janeiro, 358",              bairro:"Bela Vista",       tel:"(11) 97972-0161",lat:-23.5580000, lng:-46.6430000, explored:false},
+  {name:"Cobertura 101",                   address:"Rua da Consolação, 57",                bairro:"Bela Vista",       tel:"(11) 99313-2615",lat:-23.5480045, lng:-46.6419066, explored:false},
+  {name:"Lello Imóveis Bela Vista",        address:"Avenida Paulista, 1200",               bairro:"Bela Vista",       tel:"(11) 3145-2000", lat:-23.5572014, lng:-46.6610391, explored:false},
+  {name:"Sh Prime Bela Vista",             address:"Avenida Brigadeiro Luís Antônio, 2344",bairro:"Bela Vista",       tel:"(11) 3149-5000", lat:-23.5681262, lng:-46.6496356, explored:false},
+  {name:"Lopes One Paulista",              address:"Rua Augusta, 1500",                    bairro:"Bela Vista",       tel:"(11) 3549-9000", lat:-23.5565457, lng:-46.6586475, explored:false},
+  {name:"Remax Central",                   address:"Rua Pamplona, 1400",                   bairro:"Bela Vista",       tel:"(11) 3285-4000", lat:-23.5689337, lng:-46.658961,  explored:false},
+  {name:"Bela Vista Imóveis",              address:"Rua Treze de Maio, 1430",              bairro:"Bela Vista",       tel:"(11) 3284-5000", lat:-23.5658417, lng:-46.6450044, explored:false},
+  {name:"Imobiliária Avanhandava",         address:"Rua Avanhandava, 258",                 bairro:"Bela Vista",       tel:"(11) 3255-1011", lat:-23.5504948, lng:-46.6453129, explored:false},
+  {name:"SBR Brokers",                     address:"Rua Frei Caneca, 558",                 bairro:"Bela Vista",       tel:"(11) 3151-6000", lat:-23.5531841, lng:-46.653078,  explored:false},
+  {name:"Bixiga Imóveis",                  address:"Rua Rui Barbosa, 412",                 bairro:"Bela Vista",       tel:"(11) 3289-2020", lat:-23.5591741, lng:-46.6454072, explored:false},
+  {name:"Paulista Prime",                  address:"Alameda Santos, 1100",                 bairro:"Bela Vista",       tel:"(11) 3171-8000", lat:-23.5569896, lng:-46.6634724, explored:false},
+  {name:"Get Imóveis Bela Vista",          address:"Rua São Carlos do Pinhal, 312",        bairro:"Bela Vista",       tel:"(11) 3266-7070", lat:-23.564566,  lng:-46.6505682, explored:false},
+  // VISITADOS ──────────────────────────────────────────────────────────────────
+  {name:"Dicon Imobiliária",               address:"Av. Brigadeiro Luís Antônio, 1300",    bairro:"Bela Vista",       tel:"",               lat:-23.5604519, lng:-46.6434896, explored:true},
+  {name:"Auxiliadora Predial Paulista",    address:"Av. Paulista, 1009",                   bairro:"Bela Vista",       tel:"",               lat:-23.5646916, lng:-46.6524691, explored:true},
+  {name:"Cyrela Brazil Realty",            address:"Av. Paulista, 1063",                   bairro:"Jardim Paulista",  tel:"",               lat:-23.5649928, lng:-46.6526796, explored:true},
+  {name:"Camargo Prime",                   address:"Av. Dr. Arnaldo, 1844",                bairro:"Sumaré",           tel:"",               lat:-23.548778,  lng:-46.6807002, explored:true},
+  {name:"França Prime Negócios Imobiliários", address:"R. Caraíbas, 488",                 bairro:"Perdizes",         tel:"",               lat:-23.5321061, lng:-46.6821612, explored:true},
+  {name:"Sumaré Imóveis",                  address:"Av. Dr. Arnaldo, 2140",                bairro:"Perdizes",         tel:"",               lat:-23.5461049, lng:-46.6816553, explored:true},
+  {name:"RMF Assessoria Imobiliária",      address:"Av. Dr. Arnaldo, 1880",                bairro:"Perdizes",         tel:"",               lat:-23.5484443, lng:-46.6809002, explored:true},
+  {name:"REMAX Target Perdizes",           address:"Rua Cayowaá, 1071",                    bairro:"Perdizes",         tel:"",               lat:-23.5377849, lng:-46.6827144, explored:true}
+];
+
+// ── Bairro → Zona mapping ──────────────────────────────────────────────────────
+const BAIRRO_TO_ZONE = {
+  "Pinheiros":       "Zona Oeste",
+  "Pompeia":         "Zona Oeste",
+  "Perdizes":        "Zona Oeste",
+  "Vila Madalena":   "Zona Oeste",
+  "Vila Leopoldina": "Zona Oeste",
+  "Itaim Bibi":      "Zona Sul",
+  "Vila Olímpia":    "Zona Sul",
+  "Bela Vista":      "Centro",
+  "Jardim Paulista": "Zona Sul",
+  "Sumaré":          "Zona Oeste"
+};
+
+const ZONE_TABS = [
+  { id: "all",        label: "Todos",  color: "#f8a845" },
+  { id: "Zona Oeste", label: "Oeste",  color: "#06b6d4" },
+  { id: "Zona Sul",   label: "Sul",    color: "#a855f7" },
+  { id: "Centro",     label: "Centro", color: "#ef4444" },
+  { id: "Zona Norte", label: "Norte",  color: "#22c55e" },
+  { id: "Zona Leste", label: "Leste",  color: "#3b82f6" }
 ];
 
 // ── Map setup ──────────────────────────────────────────────────────────────────
 const map = L.map('map', { zoomControl: false }).setView([-23.565, -46.695], 13);
-
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '© OpenStreetMap · © CARTO',
-  maxZoom: 19
+  attribution: '© OpenStreetMap · © CARTO', maxZoom: 19
 }).addTo(map);
-
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-// ── Orange pin icon ────────────────────────────────────────────────────────────
+// ── Pin icons ──────────────────────────────────────────────────────────────────
 function makeIcon(color) {
-  color = color || '#f8a845';
-  const stroke = color === '#f8a845' ? '#c47a1a' : '#0008';
+  const dark = parseInt(color.slice(1), 16) < 0x808080;
+  const stroke = dark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)';
   return L.divIcon({
     className: '',
     html: `<svg width="28" height="40" viewBox="0 0 28 40" xmlns="http://www.w3.org/2000/svg">
       <path d="M14 1C7.1 1 1.5 6.6 1.5 13.5C1.5 23.2 14 39 14 39S26.5 23.2 26.5 13.5C26.5 6.6 20.9 1 14 1Z"
         fill="${color}" stroke="${stroke}" stroke-width="1.5"/>
-      <circle cx="14" cy="13.5" r="5" fill="white" opacity="0.95"/>
+      <circle cx="14" cy="13.5" r="5" fill="white" opacity="0.9"/>
     </svg>`,
-    iconSize: [28, 40],
-    iconAnchor: [14, 40],
-    popupAnchor: [0, -42]
+    iconSize: [28, 40], iconAnchor: [14, 40], popupAnchor: [0, -42]
   });
 }
 
-const defaultIcon = makeIcon('#f8a845');
+const ICON_UNEXPLORED = makeIcon('#262D3B');
+const ICON_EXPLORED   = makeIcon('#FF6633');
 
 // ── Build markers ──────────────────────────────────────────────────────────────
 const markers = locations.map(loc => {
-  const marker = L.marker([loc.lat, loc.lng], { icon: defaultIcon });
+  const icon = loc.explored ? ICON_EXPLORED : ICON_UNEXPLORED;
+  const headerBg   = loc.explored ? '#FF6633' : '#262D3B';
+  const nameColor  = loc.explored ? '#1a0f00' : '#ffffff';
+  const bairroColor= loc.explored ? 'rgba(26,15,0,0.6)' : 'rgba(255,255,255,0.6)';
+
+  const marker = L.marker([loc.lat, loc.lng], { icon });
   marker.bindPopup(`
-    <div style="min-width:210px; font-family:-apple-system,'Segoe UI',sans-serif;">
-      <div class="popup-header">
-        <div class="popup-name">${loc.name}</div>
-        <div class="popup-bairro">${loc.bairro}</div>
+    <div style="min-width:210px;font-family:-apple-system,'Segoe UI',sans-serif;">
+      <div class="popup-header" style="background:${headerBg}">
+        <div class="popup-name" style="color:${nameColor}">${loc.name}</div>
+        <div class="popup-bairro" style="color:${bairroColor}">${loc.bairro}</div>
       </div>
       <div class="popup-body">
         <div class="popup-row"><span class="popup-icon">📍</span><span>${loc.address}, ${loc.bairro}, São Paulo</span></div>
@@ -354,75 +385,213 @@ const markers = locations.map(loc => {
 
 const layerGroup = L.layerGroup(markers).addTo(map);
 
-// ── Sidebar: bairros ───────────────────────────────────────────────────────────
-const bairros = [...new Set(locations.map(l => l.bairro))];
-const bairroList = document.getElementById('bairro-list');
+// ── State ──────────────────────────────────────────────────────────────────────
+let activeZone   = 'all';
 let activeBairro = null;
+let activeStatus = 'all'; // 'all' | 'explored' | 'unexplored'
 
-const allBtn = document.createElement('button');
-allBtn.className = 'bairro-btn active';
-allBtn.innerHTML = `<span class="bairro-dot"></span> Todos <span class="bairro-count">${locations.length}</span>`;
-allBtn.addEventListener('click', () => {
-  activeBairro = null;
-  applyFilters();
-  document.querySelectorAll('.bairro-btn').forEach(b => b.classList.remove('active'));
-  allBtn.classList.add('active');
-});
-bairroList.appendChild(allBtn);
-
-bairros.forEach(bairro => {
-  const count = locations.filter(l => l.bairro === bairro).length;
-  const btn = document.createElement('button');
-  btn.className = 'bairro-btn';
-  btn.innerHTML = `<span class="bairro-dot"></span> ${bairro} <span class="bairro-count">${count}</span>`;
+// ── Status filter buttons ──────────────────────────────────────────────────────
+document.querySelectorAll('.sfilter-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    activeBairro = bairro;
+    activeStatus = btn.dataset.status;
+    document.querySelectorAll('.sfilter-btn').forEach(b => {
+      b.className = 'sfilter-btn';
+    });
+    if (activeStatus === 'all')        btn.classList.add('active-all');
+    else if (activeStatus === 'explored')   btn.classList.add('active-explored');
+    else                                    btn.classList.add('active-unexplored');
+    renderBairroList();
     applyFilters();
-    document.querySelectorAll('.bairro-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
   });
-  bairroList.appendChild(btn);
 });
 
-// ── Search ─────────────────────────────────────────────────────────────────────
-document.getElementById('search-input').addEventListener('input', applyFilters);
+// ── Zone tabs ──────────────────────────────────────────────────────────────────
+const zoneTabsEl = document.getElementById('zone-tabs');
 
+ZONE_TABS.forEach(z => {
+  const total = z.id === 'all'
+    ? locations.length
+    : locations.filter(l => BAIRRO_TO_ZONE[l.bairro] === z.id).length;
+
+  const btn = document.createElement('button');
+  btn.className = 'ztab' + (z.id === 'all' ? ' active' : '');
+  btn.style.setProperty('--zc', z.color);
+  btn.dataset.zone = z.id;
+  btn.title = `${z.label} (${total})`;
+  btn.textContent = z.label;
+
+  btn.addEventListener('click', () => {
+    activeZone   = z.id;
+    activeBairro = null;
+    document.querySelectorAll('.ztab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderBairroList();
+    applyFilters();
+    fitZone();
+  });
+
+  zoneTabsEl.appendChild(btn);
+});
+
+// ── Bairro list ────────────────────────────────────────────────────────────────
+function renderBairroList() {
+  const list    = document.getElementById('bairro-list');
+  const label   = document.getElementById('zone-label');
+  list.innerHTML = '';
+
+  const tab = ZONE_TABS.find(z => z.id === activeZone);
+  label.textContent = tab ? tab.label : 'Bairros';
+  label.style.color = tab ? tab.color : '#444';
+
+  // Which bairros to show
+  const allBairros = [...new Set(locations.map(l => l.bairro))];
+  const bairros = activeZone === 'all'
+    ? allBairros
+    : allBairros.filter(b => BAIRRO_TO_ZONE[b] === activeZone);
+
+  if (bairros.length === 0) {
+    list.innerHTML = '<p style="font-size:11px;color:#444;padding:8px 4px">Nenhum bairro nesta zona</p>';
+    return;
+  }
+
+  const matchesStatus = l => activeStatus === 'all' || (activeStatus === 'explored' ? l.explored : !l.explored);
+
+  // "Todos" row
+  const totalVisible = locations.filter(l =>
+    (activeZone === 'all' || BAIRRO_TO_ZONE[l.bairro] === activeZone) && matchesStatus(l)
+  ).length;
+
+  const allRow = document.createElement('button');
+  allRow.className = 'bairro-btn' + (!activeBairro ? ' active' : '');
+  allRow.innerHTML = `<span class="bairro-dot" style="background:${tab ? tab.color : '#f8a845'}"></span> Todos <span class="bairro-count">${totalVisible}</span>`;
+  allRow.addEventListener('click', () => {
+    activeBairro = null;
+    renderBairroList();
+    applyFilters();
+    fitZone();
+  });
+  list.appendChild(allRow);
+
+  bairros.forEach(bairro => {
+    const count = locations.filter(l => l.bairro === bairro && matchesStatus(l)).length;
+    if (count === 0) return;
+    const zoneColor = ZONE_TABS.find(z => z.id === (BAIRRO_TO_ZONE[bairro] || 'all'))?.color || '#f8a845';
+    const row = document.createElement('button');
+    row.className = 'bairro-btn' + (activeBairro === bairro ? ' active' : '');
+    row.innerHTML = `<span class="bairro-dot" style="background:${zoneColor}"></span> ${bairro} <span class="bairro-count">${count}</span>`;
+    row.addEventListener('click', () => {
+      activeBairro = bairro;
+      renderBairroList();
+      applyFilters();
+      fitBairro(bairro);
+    });
+    list.appendChild(row);
+  });
+}
+
+// ── Filters ────────────────────────────────────────────────────────────────────
 function applyFilters() {
   const term = document.getElementById('search-input').value.trim().toLowerCase();
   let visible = 0;
-
   layerGroup.clearLayers();
 
   markers.forEach(marker => {
     const loc = marker._locData;
-    const matchSearch = !term ||
-      loc.name.toLowerCase().includes(term) ||
-      loc.address.toLowerCase().includes(term) ||
-      loc.bairro.toLowerCase().includes(term);
-    const matchBairro = !activeBairro || loc.bairro === activeBairro;
-
-    if (matchSearch && matchBairro) {
-      layerGroup.addLayer(marker);
-      visible++;
-    }
+    const matchSearch  = !term || loc.name.toLowerCase().includes(term) || loc.address.toLowerCase().includes(term) || loc.bairro.toLowerCase().includes(term);
+    const matchZone    = activeZone === 'all' || BAIRRO_TO_ZONE[loc.bairro] === activeZone;
+    const matchBairro  = !activeBairro || loc.bairro === activeBairro;
+    const matchStatus  = activeStatus === 'all' || (activeStatus === 'explored' ? loc.explored : !loc.explored);
+    if (matchSearch && matchZone && matchBairro && matchStatus) { layerGroup.addLayer(marker); visible++; }
   });
 
   document.getElementById('visible-count').textContent = visible;
 }
 
-// ── Fit map to active bairro when filtered ────────────────────────────────────
-document.querySelectorAll('.bairro-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    if (activeBairro) {
-      const pts = markers
-        .filter(m => m._locData.bairro === activeBairro)
-        .map(m => m.getLatLng());
-      if (pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.25));
-    } else {
-      map.setView([-23.565, -46.695], 13);
-    }
-  });
+function fitZone() {
+  const pts = markers
+    .filter(m => activeZone === 'all' || BAIRRO_TO_ZONE[m._locData.bairro] === activeZone)
+    .map(m => m.getLatLng());
+  if (pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.2));
+  else map.setView([-23.565, -46.695], 13);
+}
+
+function fitBairro(bairro) {
+  const pts = markers.filter(m => m._locData.bairro === bairro).map(m => m.getLatLng());
+  if (pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.3));
+}
+
+document.getElementById('search-input').addEventListener('input', () => {
+  activeBairro = null;
+  activeZone   = 'all';
+  document.querySelectorAll('.ztab').forEach(b => b.classList.toggle('active', b.dataset.zone === 'all'));
+  renderBairroList();
+  applyFilters();
 });
+
+// ── Zone polygons (Overpass + Turf) ───────────────────────────────────────────
+const ZONE_COLORS = { "Norte":"#22c55e","Oeste":"#06b6d4","Centro":"#ef4444","Sul":"#a855f7","Leste":"#3b82f6" };
+const ZONE_LABELS = { "Norte":"Zona Norte","Oeste":"Zona Oeste","Centro":"Centro","Sul":"Zona Sul","Leste":"Zona Leste" };
+const DISTRICT_ZONES = {
+  "Bela Vista":"Centro","Bom Retiro":"Centro","Cambuci":"Centro","Consolação":"Centro","Liberdade":"Centro","Pari":"Centro","República":"Centro","Santa Cecília":"Centro","Sé":"Centro",
+  "Anhanguera":"Norte","Brasilândia":"Norte","Cachoeirinha":"Norte","Casa Verde":"Norte","Freguesia do Ó":"Norte","Jaçanã":"Norte","Jaguara":"Norte","Jaraguá":"Norte","Limão":"Norte","Mandaqui":"Norte","Perus":"Norte","Pirituba":"Norte","Santana":"Norte","São Domingos":"Norte","Tremembé":"Norte","Tucuruvi":"Norte","Vila Guilherme":"Norte","Vila Maria":"Norte","Vila Medeiros":"Norte",
+  "Água Rasa":"Leste","Aricanduva":"Leste","Artur Alvim":"Leste","Belém":"Leste","Brás":"Leste","Cangaíba":"Leste","Carrão":"Leste","Cidade Líder":"Leste","Cidade Tiradentes":"Leste","Ermelino Matarazzo":"Leste","Guaianases":"Leste","Iguatemi":"Leste","Itaim Paulista":"Leste","Itaquera":"Leste","Jardim Helena":"Leste","José Bonifácio":"Leste","Lajeado":"Leste","Mooca":"Leste","Parque do Carmo":"Leste","Penha":"Leste","Ponte Rasa":"Leste","São Lucas":"Leste","São Mateus":"Leste","São Miguel Paulista":"Leste","São Rafael":"Leste","Sapopemba":"Leste","Tatuapé":"Leste","Vila Curuçá":"Leste","Vila Formosa":"Leste","Vila Jacuí":"Leste","Vila Matilde":"Leste","Vila Prudente":"Leste",
+  "Campo Belo":"Sul","Campo Grande":"Sul","Campo Limpo":"Sul","Capão Redondo":"Sul","Cidade Ademar":"Sul","Cidade Dutra":"Sul","Cursino":"Sul","Grajaú":"Sul","Ipiranga":"Sul","Itaim Bibi":"Sul","Jabaquara":"Sul","Jardim Ângela":"Sul","Jardim Paulista":"Sul","Jardim São Luís":"Sul","Marsilac":"Sul","Moema":"Sul","Parelheiros":"Sul","Pedreira":"Sul","Sacomã":"Sul","Santo Amaro":"Sul","Saúde":"Sul","Socorro":"Sul","Vila Andrade":"Sul","Vila Mariana":"Sul",
+  "Alto de Pinheiros":"Oeste","Barra Funda":"Oeste","Butantã":"Oeste","Jaguaré":"Oeste","Lapa":"Oeste","Morumbi":"Oeste","Perdizes":"Oeste","Pinheiros":"Oeste","Raposo Tavares":"Oeste","Rio Pequeno":"Oeste","Vila Leopoldina":"Oeste","Vila Sônia":"Oeste"
+};
+
+const zoneLayer = L.layerGroup();
+let zonesVisible = false, zonesLoaded = false;
+
+async function loadZones() {
+  const btn = document.getElementById('btn-zonas');
+  const span = btn.querySelector('span');
+  span.textContent = 'Carregando...';
+  btn.disabled = true;
+  try {
+    let osmData;
+    const cached = localStorage.getItem('sp_districts_osm_v2');
+    if (cached) { osmData = JSON.parse(cached); }
+    else {
+      const q = `[out:json][timeout:120];relation(298285);map_to_area->.sp;relation["boundary"="administrative"](area.sp)["admin_level"="9"];out geom qt;`;
+      const r = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:'data='+encodeURIComponent(q), headers:{'Content-Type':'application/x-www-form-urlencoded'} });
+      osmData = await r.json();
+      localStorage.setItem('sp_districts_osm_v2', JSON.stringify(osmData));
+    }
+    const geojson = osmtogeojson(osmData);
+    const byZone = {};
+    geojson.features.forEach(f => {
+      if (f.geometry && (f.geometry.type==='Polygon'||f.geometry.type==='MultiPolygon')) {
+        const zone = DISTRICT_ZONES[f.properties.name||''];
+        if (zone) { (byZone[zone]=byZone[zone]||[]).push(f); }
+      }
+    });
+    Object.entries(byZone).forEach(([zone, features]) => {
+      let merged = features[0];
+      for (let i=1;i<features.length;i++) try { merged=turf.union(merged,features[i]); } catch(e) {}
+      if (!merged) return;
+      const color = ZONE_COLORS[zone];
+      L.geoJSON(merged,{style:{color,weight:2.5,dashArray:'10,7',fillColor:color,fillOpacity:0.07,interactive:false},interactive:false}).addTo(zoneLayer);
+      try {
+        const c = turf.centroid(merged).geometry.coordinates;
+        L.marker([c[1],c[0]],{icon:L.divIcon({className:'zone-label',html:ZONE_LABELS[zone],iconAnchor:[50,8],iconSize:[100,16]}),interactive:false}).addTo(zoneLayer);
+      } catch(e) {}
+    });
+    zonesLoaded = true;
+  } catch(e) { span.textContent='Erro'; btn.disabled=false; return; }
+  zoneLayer.addTo(map); zonesVisible=true;
+  btn.classList.add('active'); span.textContent='Ocultar zonas'; btn.disabled=false;
+}
+
+document.getElementById('btn-zonas').addEventListener('click', () => {
+  if (!zonesLoaded) { loadZones(); return; }
+  zonesVisible = !zonesVisible;
+  const btn=document.getElementById('btn-zonas'), span=btn.querySelector('span');
+  if (zonesVisible) { zoneLayer.addTo(map); btn.classList.add('active'); span.textContent='Ocultar zonas'; }
+  else { map.removeLayer(zoneLayer); btn.classList.remove('active'); span.textContent='Mostrar zonas'; }
+});
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+renderBairroList();
 </script>
 </body>
 </html>
