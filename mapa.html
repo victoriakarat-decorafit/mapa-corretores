@@ -675,7 +675,6 @@ mHandle.addEventListener('click', toggleSidebar);
 sHeader.addEventListener('click', toggleSidebar);
 
 // Auto-close sidebar when a bairro is selected on mobile
-const origRenderBairroList = renderBairroList;
 document.getElementById('bairro-list').addEventListener('click', () => {
   if (isMobile()) {
     setTimeout(() => { sidebar.classList.remove('open'); map.invalidateSize(); }, 150);
