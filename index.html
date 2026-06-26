@@ -202,7 +202,7 @@
   <div id="mobile-handle"></div>
   <div id="sidebar-header">
     <h1>Mapa de Corretores<br>São Paulo</h1>
-    <p id="total-label">104 imobiliárias · 10 bairros</p>
+    <p id="total-label">114 imobiliárias · 10 bairros</p>
   </div>
 
   <div id="search">
@@ -373,7 +373,18 @@ const locations = [
   {name:"França Prime Negócios Imobiliários", address:"R. Caraíbas, 488",                 bairro:"Perdizes",         tel:"",               lat:-23.5321061, lng:-46.6821612, explored:true},
   {name:"Sumaré Imóveis",                  address:"Av. Dr. Arnaldo, 2140",                bairro:"Perdizes",         tel:"",               lat:-23.5461049, lng:-46.6816553, explored:true},
   {name:"RMF Assessoria Imobiliária",      address:"Av. Dr. Arnaldo, 1880",                bairro:"Perdizes",         tel:"",               lat:-23.5484443, lng:-46.6809002, explored:true},
-  {name:"REMAX Target Perdizes",           address:"Rua Cayowaá, 1071",                    bairro:"Perdizes",         tel:"",               lat:-23.5377849, lng:-46.6827144, explored:true}
+  {name:"REMAX Target Perdizes",           address:"Rua Cayowaá, 1071",                    bairro:"Perdizes",         tel:"",               lat:-23.5377849, lng:-46.6827144, explored:true},
+  // VISITADOS — Oscar Freire e região
+  {name:"Plantão Amália de Noronha, 276",  address:"Rua Amália de Noronha, 276",           bairro:"Jardim Paulista",  tel:"", note:"Plantão — apresentação enviada para o Rodriguez",                        lat:-23.5749,    lng:-46.6618,    explored:true},
+  {name:"Century 21",                       address:"Rua Oscar Freire, 530",                bairro:"Jardim Paulista",  tel:"", note:"Mudou de endereço",                                                        lat:-23.5637,    lng:-46.6600,    explored:true},
+  {name:"Lello",                            address:"Rua Oscar Freire, 667",                bairro:"Jardim Paulista",  tel:"", note:"Falei com o corretor Eduardo — contato do diretor Felicio",               lat:-23.5639,    lng:-46.6618,    explored:true},
+  {name:"Plantão Oscar Freire, 1560",       address:"Rua Oscar Freire, 1560",               bairro:"Pinheiros",        tel:"", note:"Endereço errado",                                                          lat:-23.5624,    lng:-46.6831,    explored:true},
+  {name:"Oscar Freire Unlimited",           address:"Rua Oscar Freire, 1597",               bairro:"Pinheiros",        tel:"", note:"Coworking",                                                                lat:-23.5623,    lng:-46.6836,    explored:true},
+  {name:"Plantão Artur de Azevedo, 181",    address:"Rua Artur de Azevedo, 181",            bairro:"Pinheiros",        tel:"", note:"Plantão — conversei com a Silvia, apresentação enviada (boa parceria)",  lat:-23.5652,    lng:-46.6699,    explored:true},
+  {name:"Plantão João Moura, 548",          address:"Rua João Moura, 548",                  bairro:"Pinheiros",        tel:"", note:"Plantão — apresentação enviada para o corretor Silvio",                   lat:-23.5620,    lng:-46.6795,    explored:true},
+  {name:"CDIA Imóveis",                     address:"R. Fradique Coutinho, 50",             bairro:"Pinheiros",        tel:"", note:"Coworking",                                                                lat:-23.5669,    lng:-46.6736,    explored:true},
+  {name:"Pluri Pinheiros",                  address:"R. Fradique Coutinho, 262",            bairro:"Pinheiros",        tel:"", note:"Plantão — enviar apresentação para o contato",                            lat:-23.5663,    lng:-46.6759,    explored:true},
+  {name:"Javier Serrano Roig Imobiliária",  address:"R. Fradique Coutinho, 587",            bairro:"Pinheiros",        tel:"", note:"Não é imobiliária",                                                       lat:-23.5654,    lng:-46.6796,    explored:true}
 ];
 
 // ── Bairro → Zona mapping ──────────────────────────────────────────────────────
@@ -440,7 +451,8 @@ const markers = locations.map(loc => {
       </div>
       <div class="popup-body">
         <div class="popup-row"><span class="popup-icon">📍</span><span>${loc.address}, ${loc.bairro}, São Paulo</span></div>
-        <div class="popup-row"><span class="popup-icon">📞</span><span>${loc.tel}</span></div>
+        ${loc.tel ? `<div class="popup-row"><span class="popup-icon">📞</span><span>${loc.tel}</span></div>` : ''}
+        ${loc.note ? `<div class="popup-row"><span class="popup-icon">📝</span><span>${loc.note}</span></div>` : ''}
       </div>
     </div>
   `, { maxWidth: 280 });
