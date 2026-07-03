@@ -242,3 +242,60 @@ if ($semZona.Count -gt 0) {
     Write-Warning "Adicione manualmente em mapa.html -> const BAIRRO_TO_ZONE = { ... }"
 }
 
+# -- 7. Commit e push automatico no GitHub -----------------------------------
+Write-Host ""
+Write-Host "Publicando no GitHub..."
+Push-Location $root
+try {
+    git add mapa.html index.html locations.json | Out-Null
+
+    $resumoPartes = @()
+    if ($added.Count -gt 0)   { $resumoPartes += "$($added.Count) endereco(s) novo(s)" }
+    if ($updated.Count -gt 0) { $resumoPartes += "$($updated.Count) status/dado(s) atualizado(s)" }
+    $resumo = $resumoPartes -join ", "
+    $mensagem = "Sincroniza mapa com a planilha - $resumo"
+
+    git commit -m "$mensagem" | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "Nada para commitar (ou o commit falhou). Verifique 'git status' manualmente."
+    } else {
+        $sha = (git rev-parse HEAD).Trim()
+        git push origin main
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host ""
+            Write-Host "Enviado para o GitHub. Aguardando a publicacao do site..."
+
+            $apiUrl = "https://api.github.com/repos/victoriakarat-decorafit/mapa-corretores/actions/runs?per_page=5"
+            $deployOk = $null
+            for ($tentativa = 0; $tentativa -lt 18; $tentativa++) {
+                Start-Sleep -Seconds 10
+                try {
+                    $runs = Invoke-RestMethod -Uri $apiUrl -Headers @{ "User-Agent" = $userAgent }
+                    $run = $runs.workflow_runs | Where-Object { $_.head_sha -eq $sha } | Select-Object -First 1
+                    if ($run -and $run.status -eq "completed") {
+                        $deployOk = ($run.conclusion -eq "success")
+                        break
+                    }
+                } catch { }
+            }
+
+            if ($deployOk -eq $true) {
+                Write-Host ""
+                Write-Host "Mapa publicado com sucesso:"
+                Write-Host "https://victoriakarat-decorafit.github.io/mapa-corretores/"
+            } elseif ($deployOk -eq $false) {
+                Write-Warning "O GitHub aceitou o commit mas a publicacao do site falhou (instabilidade do GitHub Pages)."
+                Write-Warning "Rode este script de novo para tentar republicar."
+            } else {
+                Write-Host ""
+                Write-Host "Commit enviado. Nao deu tempo de confirmar a publicacao do site, mas ela deve sair em instantes:"
+                Write-Host "https://victoriakarat-decorafit.github.io/mapa-corretores/"
+            }
+        } else {
+            Write-Warning "O commit foi feito localmente, mas o 'git push' falhou. Confira sua conexao/login do git e rode 'git push origin main' manualmente."
+        }
+    }
+} finally {
+    Pop-Location
+}
+
