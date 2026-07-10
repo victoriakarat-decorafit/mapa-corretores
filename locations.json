@@ -1218,5 +1218,35 @@
     "lat": -23.6227472,
     "lng": -46.69314,
     "explored": true
+  },
+  {
+    "name": "Almá Pinheiros",
+    "address": "Rua Alves Guimarães, 750",
+    "bairro": "Jardim Paulista",
+    "tel": "",
+    "note": "Contato com a corretora Genilde",
+    "lat": -23.5559979,
+    "lng": -46.677971,
+    "explored": true
+  },
+  {
+    "name": "Naeem",
+    "address": "Rua Capote Valente, 989",
+    "bairro": "Jardim Paulista",
+    "tel": "",
+    "note": "Contato com a corretora Sabatini e corretora Cavalcante",
+    "lat": -23.5536124,
+    "lng": -46.6784577,
+    "explored": true
+  },
+  {
+    "name": "RFM",
+    "address": "Rua Oscar Freire 900",
+    "bairro": "Cerqueira César",
+    "tel": "",
+    "note": "Entrar em contato",
+    "lat": -23.5630083,
+    "lng": -46.6689877,
+    "explored": false
   }
 ]
