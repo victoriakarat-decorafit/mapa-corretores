@@ -212,6 +212,7 @@ def publish_to_github(added_count, updated_count):
 
 def main():
     dry_run = "--dry-run" in sys.argv
+    only_new = "--only-new" in sys.argv
 
     sheet_rows = download_sheet(SHEET_CSV_URL)
 
@@ -238,6 +239,8 @@ def main():
         explored = get_explored(status)
 
         if key in index_by_addr:
+            if only_new:
+                continue
             existing = index_by_addr[key]
             changed = False
             if existing["explored"] != explored:
