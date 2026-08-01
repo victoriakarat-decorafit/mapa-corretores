@@ -1248,5 +1248,195 @@
     "lat": -23.5630083,
     "lng": -46.6689877,
     "explored": false
+  },
+  {
+    "name": "Jardim da Hípica",
+    "address": "Avenida João Dias 940",
+    "bairro": "Granja Julieta",
+    "tel": "",
+    "note": "Contato com o corretor Rickson",
+    "lat": -23.6447968,
+    "lng": -46.7205589,
+    "explored": true
+  },
+  {
+    "name": "Vibra Residencial",
+    "address": "Avenida Ministro Laudo Ferreira de Camargo, 433",
+    "bairro": "Butantã",
+    "tel": "",
+    "note": "Contato com a corretora Ivete e corretor Valladão",
+    "lat": -23.5880601,
+    "lng": -46.7363832,
+    "explored": true
+  },
+  {
+    "name": "Plantão",
+    "address": "Rua Mourato Coelho, 90",
+    "bairro": "Pinheiros",
+    "tel": "",
+    "note": "Coworking",
+    "lat": -23.5659288,
+    "lng": -46.6855525,
+    "explored": true
+  },
+  {
+    "name": "Refúgios Urbanos",
+    "address": "Rua Fradique Coutinho, 1597",
+    "bairro": "Pinheiros",
+    "tel": "",
+    "note": "Mudou de endereço",
+    "lat": -23.5638974,
+    "lng": -46.6859616,
+    "explored": true
+  },
+  {
+    "name": "Ben-Hur Imóveis",
+    "address": "Rua Teodoro Sampaio, 1020",
+    "bairro": "Jardim Paulista",
+    "tel": "",
+    "note": "Coworking",
+    "lat": -23.5586435,
+    "lng": -46.6798806,
+    "explored": false
+  },
+  {
+    "name": "Plantão",
+    "address": "Rua Luiz Seraphico Junior, 326",
+    "bairro": "Granja Julieta",
+    "tel": "",
+    "note": "Contato com a corretora Felicia",
+    "lat": -23.6351887,
+    "lng": -46.7141171,
+    "explored": true
+  },
+  {
+    "name": "Ânima Imóveis",
+    "address": "Av. Padre Antônio José dos Santos, 142",
+    "bairro": "Brooklin Novo",
+    "tel": "",
+    "note": "Enviar mensagem no whatsapp",
+    "lat": -23.6148895,
+    "lng": -46.6808361,
+    "explored": true
+  },
+  {
+    "name": "Plantão",
+    "address": "Rua Gomes de Carvalho, 621",
+    "bairro": "Vila Olímpia",
+    "tel": "",
+    "note": "Enviar mensagem no whatsapp",
+    "lat": -23.5981538,
+    "lng": -46.6829066,
+    "explored": true
+  },
+  {
+    "name": "Fragata Imóveis",
+    "address": "R. Turiassu, 390",
+    "bairro": "Perdizes",
+    "tel": "",
+    "note": "Peguei o número de whats pela placa",
+    "lat": -23.5333106,
+    "lng": -46.6666382,
+    "explored": false
+  },
+  {
+    "name": "Edifício Maison",
+    "address": "Rua Gomes de carvalho, 2019",
+    "bairro": "Vila Olímpia",
+    "tel": "",
+    "note": "Enviar mensagem no whatsapp",
+    "lat": -23.5981538,
+    "lng": -46.6829066,
+    "explored": true
+  },
+  {
+    "name": "Edifício Kasa",
+    "address": "Rua casa do ator, 99",
+    "bairro": "Vila Olímpia",
+    "tel": "",
+    "note": "Enviar mensagem no whatsapp",
+    "lat": -23.6009627,
+    "lng": -46.6750697,
+    "explored": false
+  },
+  {
+    "name": "Remax",
+    "address": "Rua casa do ator, 1111",
+    "bairro": "Vila Olímpia",
+    "tel": "",
+    "note": "Coworking",
+    "lat": -23.596717,
+    "lng": -46.6836636,
+    "explored": true
+  },
+  {
+    "name": "Plantão",
+    "address": "Rua casa do ator, 542",
+    "bairro": "Vila Olímpia",
+    "tel": "",
+    "note": "Contato com a corretora Vida",
+    "lat": -23.5989936,
+    "lng": -46.6787538,
+    "explored": true
+  },
+  {
+    "name": "Plantão",
+    "address": "Rua caetés, 139",
+    "bairro": "Perdizes",
+    "tel": "",
+    "note": "",
+    "lat": -23.5355394,
+    "lng": -46.6731425,
+    "explored": true
+  },
+  {
+    "name": "Attento Gestão Imobiliária",
+    "address": "Av. Imperatriz Leopoldina, 915",
+    "bairro": "Vila Leopoldina",
+    "tel": "",
+    "note": "Contato com Emerson",
+    "lat": -23.529712,
+    "lng": -46.7314205,
+    "explored": true
+  },
+  {
+    "name": "IBravo Realty",
+    "address": "Rua Aroaba, 51",
+    "bairro": "Vila Hamburguesa",
+    "tel": "",
+    "note": "Enviar mensagem no whatsapp",
+    "lat": -23.5340278,
+    "lng": -46.731179,
+    "explored": true
+  },
+  {
+    "name": "Lopes",
+    "address": "Rua Nanuque, nº 636",
+    "bairro": "Vila Leopoldina",
+    "tel": "",
+    "note": "",
+    "lat": -23.5292096,
+    "lng": -46.7283094,
+    "explored": true
+  },
+  {
+    "name": "PC4G",
+    "address": "Av. Marquês de S. Vicente, 576",
+    "bairro": "Barra Funda",
+    "tel": "",
+    "note": "Coworking",
+    "lat": -23.5214673,
+    "lng": -46.6655946,
+    "explored": true
+  },
+  {
+    "name": "Segundo imóvel",
+    "address": "R. Pascal, 1353",
+    "bairro": "Brooklin Velho",
+    "tel": "",
+    "note": "Contato com Adriano",
+    "lat": -23.616258,
+    "lng": -46.6774184,
+    "explored": true
   }
 ]
