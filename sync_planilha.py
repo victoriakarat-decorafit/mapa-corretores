@@ -223,6 +223,7 @@ def main():
 
     added, updated, failed = [], [], []
     updated_ids = set()
+    skipped_blank_status = 0
 
     for row in sheet_rows:
         nome = get_field(row, ["nome"])
@@ -232,6 +233,9 @@ def main():
         obs = get_field(row, ["observação", "observacao"])
 
         if not endereco:
+            continue
+        if not status:
+            skipped_blank_status += 1
             continue
         if not nome:
             nome = endereco
@@ -282,7 +286,7 @@ def main():
             index_by_addr[key] = new_entry
             added.append(new_entry)
 
-    print(f"\nResumo: {len(added)} novo(s), {len(updated)} atualizado(s), {len(failed)} falha(s).")
+    print(f"\nResumo: {len(added)} novo(s), {len(updated)} atualizado(s), {len(failed)} falha(s), {skipped_blank_status} ignorado(s) (status em branco).")
     if failed:
         print("Enderecos que falharam na geocodificacao (nao foram adicionados):")
         for f in failed:
