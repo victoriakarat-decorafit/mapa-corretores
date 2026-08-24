@@ -174,7 +174,7 @@
     "address": "Avenida Pompeia, 1610",
     "bairro": "Pompeia",
     "tel": "(11) 3677-1000",
-    "note": "",
+    "note": "Mudou de lugar - Endereço novo: Avenida Professor Alfonso Bovero, 820",
     "lat": -23.5375191,
     "lng": -46.6903744,
     "explored": false
@@ -184,10 +184,10 @@
     "address": "Rua Cotoxó, 611",
     "bairro": "Pompeia",
     "tel": "(11) 3871-3333",
-    "note": "",
+    "note": "Coworking",
     "lat": -23.5325241,
     "lng": -46.6848883,
-    "explored": false
+    "explored": true
   },
   {
     "name": "Lello Pompeia",
@@ -544,10 +544,10 @@
     "address": "Avenida Imperatriz Leopoldina, 957",
     "bairro": "Vila Leopoldina",
     "tel": "(11) 3831-1011",
-    "note": "",
+    "note": "Contato com Paulo",
     "lat": -23.5301056,
     "lng": -46.7312749,
-    "explored": false
+    "explored": true
   },
   {
     "name": "Weber Imóveis",
@@ -644,10 +644,10 @@
     "address": "Rua Tabapuã, 1125",
     "bairro": "Itaim Bibi",
     "tel": "(11) 3074-1000",
-    "note": "",
+    "note": "Coworking - Só atuam com imóveis comerciais",
     "lat": -23.5846771,
     "lng": -46.6814502,
-    "explored": false
+    "explored": true
   },
   {
     "name": "Coelho da Fonseca Itaim",
@@ -724,10 +724,10 @@
     "address": "Rua Casa do Ator, 1117",
     "bairro": "Vila Olímpia",
     "tel": "(11) 94027-7000",
-    "note": "",
+    "note": "Coworking",
     "lat": -23.5966906,
     "lng": -46.6837211,
-    "explored": false
+    "explored": true
   },
   {
     "name": "Sh Prime Vila Olímpia",
@@ -1014,7 +1014,7 @@
     "address": "Av. Paulista, 1063",
     "bairro": "Jardim Paulista",
     "tel": "",
-    "note": "",
+    "note": "Contato com Fred",
     "lat": -23.5649928,
     "lng": -46.6526796,
     "explored": true
@@ -1437,6 +1437,256 @@
     "note": "Contato com Adriano",
     "lat": -23.616258,
     "lng": -46.6774184,
+    "explored": true
+  },
+  {
+    "name": "Imad",
+    "address": "R. Maranhão, 554",
+    "bairro": "Higienópolis",
+    "tel": "",
+    "note": "Número errado",
+    "lat": -23.5439147,
+    "lng": -46.6576492,
+    "explored": true
+  },
+  {
+    "name": "Mario Ferraz Imóveis",
+    "address": "R. Prof. Artur Ramos, 245",
+    "bairro": "Jardim Europa",
+    "tel": "",
+    "note": "Enviada mensagem no whatsapp",
+    "lat": -23.5821129,
+    "lng": -46.6864045,
+    "explored": true
+  },
+  {
+    "name": "Constrac",
+    "address": "Rua Pedroso Alvarenga, 1301",
+    "bairro": "Vila Olímpia",
+    "tel": "",
+    "note": "Enviada mensagem para a construtora",
+    "lat": -23.5830172,
+    "lng": -46.6827436,
+    "explored": true
+  },
+  {
+    "name": "Plantão",
+    "address": "Rua Tabapuã, 594",
+    "bairro": "Vila Olímpia",
+    "tel": "",
+    "note": "",
+    "lat": -23.5833006,
+    "lng": -46.6764148,
+    "explored": true
+  },
+  {
+    "name": "Plantão",
+    "address": "Rua Joaquim Floriano, 233",
+    "bairro": "Vila Olímpia",
+    "tel": "",
+    "note": "Enviada mensagem no whatsapp",
+    "lat": -23.583958,
+    "lng": -46.6723034,
+    "explored": false
+  },
+  {
+    "name": "FMI Prime",
+    "address": "Rua Raul Pompéia, 430",
+    "bairro": "Pompéia",
+    "tel": "",
+    "note": "Contato com Lindemberg",
+    "lat": -23.5296495,
+    "lng": -46.6873416,
+    "explored": true
+  },
+  {
+    "name": "Platinum Prime Imóveis",
+    "address": "Rua Diana, 592",
+    "bairro": "Pompéia",
+    "tel": "",
+    "note": "Coworking - Peguei contato",
+    "lat": -23.5334198,
+    "lng": -46.6817861,
+    "explored": true
+  },
+  {
+    "name": "Plantão",
+    "address": "Avenida Pompeia, 843",
+    "bairro": "Pompéia",
+    "tel": "",
+    "note": "Contato com o corretor Lino",
+    "lat": -23.5319089,
+    "lng": -46.6859965,
+    "explored": true
+  },
+  {
+    "name": "Plataforma Imóveis",
+    "address": "Avenida Professor Alfonso Bovero, 1238",
+    "bairro": "Pompéia",
+    "tel": "",
+    "note": "Contato com Gabriel",
+    "lat": -23.5363163,
+    "lng": -46.6863036,
+    "explored": true
+  },
+  {
+    "name": "Madri Imóveis",
+    "address": "R. Carlos Weber, 1278",
+    "bairro": "Vila Leopoldina",
+    "tel": "",
+    "note": "Contato com Renato",
+    "lat": -23.5310485,
+    "lng": -46.7275973,
+    "explored": true
+  },
+  {
+    "name": "Marie Claire Imóveis",
+    "address": "Rua Carlos Weber, 1244",
+    "bairro": "Vila Leopoldina",
+    "tel": "",
+    "note": "Contato com Marie",
+    "lat": -23.5308138,
+    "lng": -46.7278129,
+    "explored": true
+  },
+  {
+    "name": "RCS Imobiliária",
+    "address": "R. Nanuque, 605",
+    "bairro": "Vila Hamburguesa",
+    "tel": "",
+    "note": "Contato com Rodrigo Correa",
+    "lat": -23.5318195,
+    "lng": -46.7249149,
+    "explored": true
+  },
+  {
+    "name": "Neto Imóveis",
+    "address": "R. Campo Grande, 501",
+    "bairro": "Vila Hamburguesa",
+    "tel": "",
+    "note": "Contato com Alexandre e Cleber",
+    "lat": -23.5318082,
+    "lng": -46.7223426,
+    "explored": true
+  },
+  {
+    "name": "Plantão",
+    "address": "Av. Prof. Francisco Morato, 4.240",
+    "bairro": "Vila Sônia",
+    "tel": "",
+    "note": "Contato com Elias",
+    "lat": -23.5904928,
+    "lng": -46.7301769,
+    "explored": true
+  },
+  {
+    "name": "Plantão",
+    "address": "Rua Cardoso de Almeida, 218",
+    "bairro": "Perdizes",
+    "tel": "",
+    "note": "Contato com corretora Railda",
+    "lat": -23.5334777,
+    "lng": -46.6649388,
+    "explored": true
+  },
+  {
+    "name": "Plantão",
+    "address": "Av. Francisco Matarazzo, 486",
+    "bairro": "Barra Funda",
+    "tel": "",
+    "note": "Contato com o corretor Solon",
+    "lat": -23.5293578,
+    "lng": -46.6677725,
+    "explored": true
+  },
+  {
+    "name": "Plantão",
+    "address": "Av. Otaviano Alves de Lima, 3600",
+    "bairro": "Parque Monteiro Soares",
+    "tel": "",
+    "note": "Contato com o corretor Alexandre",
+    "lat": -23.5074013,
+    "lng": -46.6922461,
+    "explored": true
+  },
+  {
+    "name": "Zimmermann Imóveis",
+    "address": "Rua Campevas, 341",
+    "bairro": "Sumaré",
+    "tel": "",
+    "note": "Enviei mensagem no whatsapp deles.",
+    "lat": -23.5375807,
+    "lng": -46.6761746,
+    "explored": true
+  },
+  {
+    "name": "C2+ Negócios Imobiliários",
+    "address": "R. Apiacás, 810",
+    "bairro": "Perdizes",
+    "tel": "",
+    "note": "Contato com Luiz",
+    "lat": -23.5385183,
+    "lng": -46.6797482,
+    "explored": true
+  },
+  {
+    "name": "Marques Dias Imóveis",
+    "address": "Rua Cotoxó, 508",
+    "bairro": "Pompéia",
+    "tel": "",
+    "note": "",
+    "lat": -23.5315993,
+    "lng": -46.6845398,
+    "explored": true
+  },
+  {
+    "name": "Plantão",
+    "address": "Rua Aurélia, 421",
+    "bairro": "Bairro Siciliano",
+    "tel": "",
+    "note": "Contato com a corretora Neide",
+    "lat": -23.5255353,
+    "lng": -46.6977907,
+    "explored": true
+  },
+  {
+    "name": "Plantão",
+    "address": "Avenida Pompeia, 2415",
+    "bairro": "Vila Anglo-Brasileira",
+    "tel": "",
+    "note": "Enviado mensagem no whatsapp",
+    "lat": -23.5444628,
+    "lng": -46.6907057,
+    "explored": false
+  },
+  {
+    "name": "Plantão",
+    "address": "Rua Heitor Penteado, 1017",
+    "bairro": "Sumarezinho",
+    "tel": "",
+    "note": "Contato com a corretora Simone e corretor Ronaldo",
+    "lat": -23.5477008,
+    "lng": -46.6885003,
+    "explored": true
+  },
+  {
+    "name": "Plantão",
+    "address": "Avenida Pompeia, 2459",
+    "bairro": "Pompéia",
+    "tel": "",
+    "note": "Enviado mensagem no whatsapp",
+    "lat": -23.5352439,
+    "lng": -46.6883766,
+    "explored": true
+  },
+  {
+    "name": "Plantão",
+    "address": "Rua Dr. Franco da Rocha, 560",
+    "bairro": "Perdizes",
+    "tel": "",
+    "note": "Enviado mensagem no whatsapp",
+    "lat": -23.5370669,
+    "lng": -46.6732908,
     "explored": true
   }
 ]
