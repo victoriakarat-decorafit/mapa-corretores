@@ -1688,5 +1688,65 @@
     "lat": -23.5370669,
     "lng": -46.6732908,
     "explored": true
+  },
+  {
+    "name": "Real Casa Imóveis Butantã",
+    "address": "Av. Vital Brasil, 305",
+    "bairro": "Caxingui",
+    "tel": "",
+    "note": "Coworking",
+    "lat": -23.5720153,
+    "lng": -46.7074316,
+    "explored": true
+  },
+  {
+    "name": "Sandro Lima Negócios",
+    "address": "Av. Vital Brasil, 177",
+    "bairro": "Caxingui",
+    "tel": "",
+    "note": "Coworking",
+    "lat": -23.5723747,
+    "lng": -46.7061186,
+    "explored": true
+  },
+  {
+    "name": "Patamar Negócios Imobiliários",
+    "address": "R. Sapetuba, 295",
+    "bairro": "Caxingui",
+    "tel": "",
+    "note": "Contato com Livia.",
+    "lat": -23.5739107,
+    "lng": -46.7098262,
+    "explored": true
+  },
+  {
+    "name": "Grupo Técnico Imobiliária",
+    "address": "R. Sapetuba, 243",
+    "bairro": "Caxingui",
+    "tel": "",
+    "note": "Contato com Angela.",
+    "lat": -23.5744582,
+    "lng": -46.7084348,
+    "explored": true
+  },
+  {
+    "name": "Achei Imóveis",
+    "address": "R. Augusto Perroni, 631.",
+    "bairro": "Caxingui",
+    "tel": "",
+    "note": "Enviar para dois números: 97125-2319 e 97125-7328",
+    "lat": -23.575203,
+    "lng": -46.7264848,
+    "explored": true
+  },
+  {
+    "name": "Butantã Imóveis",
+    "address": "Av. Comendador Alberto Bonfiglioli, 600.",
+    "bairro": "Butantã",
+    "tel": "",
+    "note": "Contato com Cristiano.",
+    "lat": -23.5787439,
+    "lng": -46.739778,
+    "explored": true
   }
 ]
