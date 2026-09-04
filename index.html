@@ -47,33 +47,6 @@
     }
     #zone-toggle button.active { border-color: #f8a845; color: #f8a845; background: #1e1505; }
 
-    /* Transit lines toggle */
-    #transit-toggle { padding: 9px 12px; border-bottom: 1px solid #1e1e30; }
-    #transit-toggle > button {
-      display: flex; align-items: center; gap: 8px; width: 100%;
-      padding: 6px 8px; border-radius: 6px; cursor: pointer;
-      border: 1px solid #252540; background: #16162a;
-      color: #bbb; font-size: 12px; transition: all 0.12s;
-    }
-    #transit-toggle > button.active { border-color: #f8a845; color: #f8a845; background: #1e1505; }
-    #transit-toggle > button .chevron { margin-left: auto; transition: transform 0.15s; }
-    #transit-toggle > button.active .chevron { transform: rotate(180deg); }
-    #transit-list { max-height: 230px; overflow-y: auto; margin-top: 8px; padding-right: 2px; }
-    .transit-group-label {
-      font-size: 10px; color: #444; text-transform: uppercase;
-      letter-spacing: 1.2px; margin: 8px 0 4px; padding-left: 2px;
-    }
-    .transit-group-label:first-child { margin-top: 0; }
-    .transit-line-row {
-      display: flex; align-items: center; gap: 8px; padding: 5px 4px;
-      font-size: 12px; color: #bbb; cursor: pointer; border-radius: 5px;
-      transition: background 0.12s, color 0.12s;
-    }
-    .transit-line-row:hover { background: #1a1a2e; color: #e0e0e0; }
-    .transit-line-row input[type="checkbox"] { flex-shrink: 0; cursor: pointer; }
-    .transit-swatch { width: 16px; height: 5px; border-radius: 3px; flex-shrink: 0; }
-    #transit-status { font-size: 11px; color: #444; padding: 4px 4px 0; }
-
     /* Zone tabs */
     #zone-tabs {
       display: flex; overflow-x: auto; border-bottom: 1px solid #1e1e30;
@@ -246,21 +219,6 @@
       </svg>
       <span>Mostrar zonas</span>
     </button>
-  </div>
-
-  <div id="transit-toggle">
-    <button id="btn-transit-toggle">
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-        <rect x="1" y="2" width="10" height="6" rx="2" stroke="currentColor" stroke-width="1.3"/>
-        <circle cx="3.3" cy="10" r="0.9" fill="currentColor"/>
-        <circle cx="8.7" cy="10" r="0.9" fill="currentColor"/>
-      </svg>
-      <span>Linhas de trilho</span>
-      <svg class="chevron" width="10" height="10" viewBox="0 0 10 10" fill="none">
-        <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
-    <div id="transit-list" hidden></div>
   </div>
 
   <div id="status-filter">
@@ -792,97 +750,6 @@ document.getElementById('btn-zonas').addEventListener('click', () => {
   const btn=document.getElementById('btn-zonas'), span=btn.querySelector('span');
   if (zonesVisible) { zoneLayer.addTo(map); btn.classList.add('active'); span.textContent='Ocultar zonas'; }
   else { map.removeLayer(zoneLayer); btn.classList.remove('active'); span.textContent='Mostrar zonas'; }
-});
-
-// ── Transit lines (Metrô / Monotrilho / CPTM) ───────────────────────────────────
-const TRANSIT_LINES = [
-  { ref:"1",  label:"Linha 1 – Azul",      group:"Metrô",      color:"#1266AF" },
-  { ref:"2",  label:"Linha 2 – Verde",     group:"Metrô",      color:"#008162" },
-  { ref:"3",  label:"Linha 3 – Vermelha",  group:"Metrô",      color:"#EE332E" },
-  { ref:"4",  label:"Linha 4 – Amarela",   group:"Metrô",      color:"#FFD400" },
-  { ref:"5",  label:"Linha 5 – Lilás",     group:"Metrô",      color:"#9200C3" },
-  { ref:"6",  label:"Linha 6 – Laranja",   group:"Metrô",      color:"#F96815" },
-  { ref:"15", label:"Linha 15 – Prata",    group:"Monotrilho", color:"#7B9192" },
-  { ref:"17", label:"Linha 17 – Ouro",     group:"Monotrilho", color:"#DE7C00" },
-  { ref:"7",  label:"Linha 7 – Rubi",      group:"CPTM",       color:"#A8034F" },
-  { ref:"8",  label:"Linha 8 – Diamante",  group:"CPTM",       color:"#808080" },
-  { ref:"9",  label:"Linha 9 – Esmeralda", group:"CPTM",       color:"#00A88E" },
-  { ref:"10", label:"Linha 10 – Turquesa", group:"CPTM",       color:"#00CED1" },
-  { ref:"11", label:"Linha 11 – Coral",    group:"CPTM",       color:"#FF7F50" },
-  { ref:"12", label:"Linha 12 – Safira",   group:"CPTM",       color:"#1C146B" },
-  { ref:"13", label:"Linha 13 – Jade",     group:"CPTM",       color:"#2CA05A" }
-];
-
-const transitList = document.getElementById('transit-list');
-TRANSIT_LINES.reduce((prevGroup, line) => {
-  if (line.group !== prevGroup) {
-    const h = document.createElement('div');
-    h.className = 'transit-group-label';
-    h.textContent = line.group;
-    transitList.appendChild(h);
-  }
-  const row = document.createElement('label');
-  row.className = 'transit-line-row';
-  row.innerHTML = `<input type="checkbox" data-ref="${line.ref}"><span class="transit-swatch" style="background:${line.color}"></span><span>${line.label}</span>`;
-  transitList.appendChild(row);
-  return line.group;
-}, null);
-const transitStatusEl = document.createElement('div');
-transitStatusEl.id = 'transit-status';
-transitList.appendChild(transitStatusEl);
-
-const TRANSIT_LAYERS = {};
-let transitLoadPromise = null;
-
-function loadTransitLines() {
-  if (transitLoadPromise) return transitLoadPromise;
-  transitStatusEl.textContent = 'Carregando traçado...';
-  transitLoadPromise = (async () => {
-    let osmData;
-    const cacheKey = 'sp_transit_lines_osm_v1';
-    const cached = localStorage.getItem(cacheKey);
-    if (cached) { osmData = JSON.parse(cached); }
-    else {
-      const q = `[out:json][timeout:120];rel["type"="route"]["route"~"^(subway|monorail|train)$"]["name"~"^Linha"](-24.1,-46.9,-23.3,-46.3);out geom;`;
-      const r = await fetch('https://overpass-api.de/api/interpreter', { method:'POST', body:'data='+encodeURIComponent(q), headers:{'Content-Type':'application/x-www-form-urlencoded'} });
-      osmData = await r.json();
-      localStorage.setItem(cacheKey, JSON.stringify(osmData));
-    }
-    const geojson = osmtogeojson(osmData);
-    geojson.features.forEach(f => {
-      const ref = f.properties && f.properties.ref;
-      const line = TRANSIT_LINES.find(l => l.ref === ref);
-      if (!line || !f.geometry) return;
-      if (!TRANSIT_LAYERS[ref]) TRANSIT_LAYERS[ref] = L.layerGroup();
-      L.geoJSON(f, { style:{ color: line.color, weight: 4, opacity: 0.85 }, interactive:false }).addTo(TRANSIT_LAYERS[ref]);
-    });
-    transitStatusEl.textContent = '';
-  })().catch(e => {
-    transitStatusEl.textContent = 'Erro ao carregar traçado.';
-    transitLoadPromise = null;
-    throw e;
-  });
-  return transitLoadPromise;
-}
-
-transitList.querySelectorAll('input[type="checkbox"][data-ref]').forEach(cb => {
-  cb.addEventListener('change', async () => {
-    const ref = cb.dataset.ref;
-    cb.disabled = true;
-    try {
-      await loadTransitLines();
-      const layer = TRANSIT_LAYERS[ref];
-      if (layer) { if (cb.checked) layer.addTo(map); else map.removeLayer(layer); }
-    } catch (e) { cb.checked = false; }
-    cb.disabled = false;
-  });
-});
-
-const btnTransitToggle = document.getElementById('btn-transit-toggle');
-btnTransitToggle.addEventListener('click', () => {
-  const isOpen = !transitList.hidden;
-  transitList.hidden = isOpen;
-  btnTransitToggle.classList.toggle('active', !isOpen);
 });
 
 // ── Init ───────────────────────────────────────────────────────────────────────
